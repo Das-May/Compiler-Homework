@@ -1,0 +1,5 @@
+﻿  ConsoleApplication1.cpp
+  Loader.cpp
+D:\Homework\编译原理\ConsoleApplication1\Loader.cpp(20,24): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+  正在生成代码...
+  ConsoleApplication1.vcxproj -> D:\Homework\编译原理\ConsoleApplication1\x64\Debug\ConsoleApplication1.exe
