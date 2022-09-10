@@ -7,6 +7,6 @@ using namespace std;
 int main()
 {
     Loader l;
-    char* c =  l.InputTxt("1-3main.cpp");
-    cout << c;
+    char* c =  l.Input("1-3main.bin", 0);
+    l.Output("ccc", 0);
 }

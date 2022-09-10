@@ -8,9 +8,7 @@ private:
 	char* filePath;
 
 public:
-	char* InputCpp(const char* filePath);
-	void OutputBin(const char* compressed);
-	char* InputBin(const char* filePath);
-	void OutputCpp(const char* decompressed);
+	char* Input(const char* filePath, int type);
+	void Output(const char* compressed, int type);
 };
 

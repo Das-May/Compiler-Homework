@@ -1,95 +1,67 @@
 #include "Loader.h"
 
-char* Loader::InputCpp(const char* filePath)
+char* Loader::Input(const char* filePath, int type)    // type=1,读入cpp文件；type=0,读入bin文件
 {
-    // 打开.cpp文件
-    ifstream cppFile(filePath, ios::in | ios::_Noreplace);
-    if (!cppFile)
+    // 打开文件
+    ifstream file;
+    if (type)
+        file.open(filePath, ios::in | ios::binary);
+    else
+        file.open(filePath, ios::in | ios::binary);
+    if (!file)
     {
-        cerr << "cpp文件读取失败" << endl;
+        cerr << "文件读取失败！" << endl;
         abort();
     }
 
     // 记录文件路径
     this->filePath = new char[strlen(filePath) + 1];
     strcpy(this->filePath, filePath);
+    cout << "文件路径： " << filePath << endl;
 
     // 获取文本长度
     int len;
-    cppFile.seekg(0, ios::end);
-    len = cppFile.tellg();
-    cout << "cpp文本内容长度： " << len << endl;
+    file.seekg(0, ios::end);
+    len = file.tellg();
+    cout << "文件内容长度： " << len << endl;
 
     // 获取文本内容
-    cppFile.seekg(0, ios::beg);
-    char* cppChar = new char[ len + 1 ];
-    memset(cppChar, 0, len + 1);
-    cppFile.read(cppChar,len);
-    cout << "cpp文本内容： " << cppChar << endl;
+    file.seekg(0, ios::beg);
+    char* c = new char[ len + 1 ];
+    memset(c, 0, len + 1);
+    file.read(c,len);
+    cout << "文件内容： " << c << endl;
 
     //返回char指针
-    return cppChar;
+    return c;
 }
 
-void Loader::OutputBin(const char* compressed)
+void Loader::Output(const char* processed, int type)    // type=1,导出bin文件；type=0，导出cpp文件
 {
-    cout << filePath << endl;
+    // 处理文件保存路径
     int len = strlen(filePath) - 3;          
-    filePath[len] = '\0';                       // 截掉cpp后缀
-    strcat(filePath, "bin");   // 追加bin后缀
-    cout << "二进制文件保存路径： " << filePath << endl;
-    ofstream binFile(filePath, ios::out | ios::binary);
-    if (!binFile)    // 如果打开失败
+    filePath[len] = '\0';                       // 截掉
+    if(type)                                    // 追加
+        strcat(filePath, "bin");             
+    else
+        strcat(filePath, "cpp");
+    cout << "文件保存路径： " << filePath << endl;
+
+    // 保存文件
+    ofstream file;
+    if (type)
+        file.open(filePath, ios::out | ios::binary);
+    else
+        file.open(filePath, ios::out);
+    if (!file)    // 如果打开失败
     {
-        cerr << "压缩文件写入失败！" << endl;
+        cerr << "文件写入失败！" << endl;
         abort();
     }
 
-    binFile.write(compressed, sizeof(compressed));
-    cout << "压缩成功！" << endl;
-}
-
-char* Loader::InputBin(const char* filePath)
-{
-    // 打开二进制文件
-    ifstream binFile(filePath, ios::in | ios::binary);
-    if (!binFile)
-    {
-        cerr << "cpp文件读取失败" << endl;
-        abort();
-    }
-
-    // 记录文件路径
-    this->filePath = new char[strlen(filePath) + 1];
-    strcpy(this->filePath, filePath);
-
-    // 获取文本长度
-    int len;
-    binFile.seekg(0, ios::end);
-    len = binFile.tellg();
-    cout << len << endl;
-
-    // 获取文本内容
-    binFile.seekg(0, ios::beg);
-    char* cppChar = new char[len + 1];
-    memset(cppChar, 0, len + 1);
-    binFile.read(cppChar, len);
-    cout << cppChar << endl;
-
-    //返回char指针
-    return cppChar;
-}
-
-void Loader::OutputCpp(const char* decompressed)
-{
-    cout << filePath << endl;
-    ofstream binFile(strcat(filePath, ".txt"), ios::out | ios::binary);
-    if (!binFile)    // 如果打开失败
-    {
-        cerr << "压缩文件写入失败！" << endl;
-        abort();
-    }
-
-    binFile.write(decompressed, sizeof(decompressed));
-    cout << "压缩成功！" << endl;
+    file.write(processed, sizeof(processed));
+    if (type)
+        cout << "压缩成功！" << endl;
+    else
+        cout << "解压成功！" << endl;
 }
