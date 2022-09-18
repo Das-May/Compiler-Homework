@@ -1,12 +1,20 @@
-ï»¿// ConsoleApplication1.cpp : æ­¤æ–‡ä»¶åŒ…å« "main" å‡½æ•°ã€‚ç¨‹åºæ‰§è¡Œå°†åœ¨æ­¤å¤„å¼€å§‹å¹¶ç»“æŸã€‚
+// ConsoleApplication1.cpp : ´ËÎÄ¼ş°üº¬ "main" º¯Êı¡£³ÌĞòÖ´ĞĞ½«ÔÚ´Ë´¦¿ªÊ¼²¢½áÊø¡£
 //
 #include "Loader.h"
+#include "Handler.h"
 #include <iostream>
 using namespace std;
 
 int main()
 {
     Loader l;
-    char* c =  l.Input("1-3main.bin", 0);
-    l.Output("ccc", 0);
+    char* c = l.Input("01Chinese.cpp");
+    Handler h;
+    c = h.compress(c);
+    cout << "(mainº¯Êı)Ñ¹ËõºóµÄÄÚÈİÎª:" << c << endl;
+    l.Output(c);
+
+    c = l.Input("01Chinese.bin");
+    c = h.decompress(c);
+    cout << "½âÑ¹ºóµÄÄÚÈİÎª£º" << c << endl;
 }
