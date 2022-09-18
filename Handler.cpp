@@ -23,7 +23,6 @@ char* Handler::compress(char* c)
 	char* headOfC = c;
 
 	string temp;		// 记录要写入文件的所有字节码
-	//int saveBin = 0x0000;				// 暂存单个字符的字节码
 	int count = 0;
 
 	for (; c[0] != 0; c++)				// 遍历每个字符
@@ -107,30 +106,33 @@ void Handler::processAlphabet(char* begin, char* end)
 
 char* Handler::myStringToChar(string s)
 {
-	int len1 = s.length();
-	int len2 = len1 / 8 + 1;
-	if (len1 % 8 != 0)
+	// 获取字符串长度
+	int len1 = s.length();	// string的字符串长度
+	int len2 = len1 / 8;// char数组的长度
+	if (len1 % 8 != 0)		// 不足8位，也进1
 	{
 		len2++;
 	}
 		
-
+	// 创建字符数组 最后一位留结束符'\0'
 	char* c = new char[len2 + 1];
-	char* headOfChar = c;
-	memset(c, 0, sizeof(c));
-	char t = 0;
+	char* headOfChar = &c[0];
+	std::memset(c, 0, len2 + 1);
 
+	// 遍历string
 	string::iterator it = s.begin();
 	while (it != s.end())
 	{
-		for (int j = 0; j < 8; j++)
+		for (int j = 0; j < 8; j++)			// 每8个01字符，写入1个char
 		{
-			if(it != s.end())
-				t = (t << 1) | (*it++ - 48);
+			if (it != s.end())
+			{
+				c[0] = (c[0] << 1) | (*it++ - 48);
+				//it++;
+			}		
 			else
-				t = (t << 1) | ('0' - 48);
+				c[0] = (c[0] << 1) | ('0' - 48);
 		}
-		c[0] = t;
 		c++;
 	}
 
@@ -141,40 +143,51 @@ char* Handler::myStringToChar(string s)
 char* Handler::decompress(char* c)
 {
 	char* headOfC = c;
+	int i = 0, j = 0;
+	int len = strlen(headOfC);
 
-	string temp01 = "";
-	string tempCode = "";
-	while (c[0] != 0)
+	// 把读到的二进制转化为01字符串
+	string temp01 = "";					
+	for(i=0;i< len;i++)
 	{
 		temp01 += myCharToString(c[0]);
 		c++;
 	}
+	len = temp01.length();
 
-	int len = temp01.length();
-	int i = 0, j = 0;
-
+	// 把01字符串解压化为代码
+	string tempCode = "";
+	string s = "";
+	i = 0;
 	while(i < len)
 	{
 		if (temp01[i] == '0') // ASCII码 或 关键字
 		{
-
+			i++;
+			if (temp01[i] == '1' && (i + 6) < len)	   // 关键字
+			{
+				i += 6;
+			}
+			else if (temp01[i] == '0' && (i + 7) < len)// ASCII码
+			{
+				i += 7;
+			}
+			else
+				break;
 		}
-		else				// 汉字
+		else				  // 汉字
 		{
-			string chineseChar1 = "";
-			/*string chineseChar2 = "";
-			for (j = 0; j < 8; j++)
-				chineseChar1 += temp01[i + j];
-			for (j = 8; j < 16; j++)
-				chineseChar2 += temp01[i + j];*/
+			s = "";
 			for (j = 0; j < 16; j++, i++)
-				chineseChar1 += temp01[i];
-			tempCode += myStringToChar(chineseChar1);
+				s += temp01[i];
+			tempCode += myStringToChar(s);
 		}
 	}
 
-	c = new char[strlen(tempCode.c_str()) + 1];
-	strcpy(c, tempCode.c_str());
+	len = strlen(tempCode.c_str());
+	c = new char[len + 1];
+	//std::memset(c, 0, len);
+	std::strcpy(c, tempCode.c_str());
 
 	delete headOfC;
 	

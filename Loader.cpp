@@ -62,7 +62,7 @@ void Loader::Output(const char* processed)
 
     // 处理文件保存路径
     len = strlen(filePath) - 3;          
-    filePath[len] = '\0';                       // 截掉
+    filePath[len] = '\0';                          // 截掉
     if(type)                                    // 追加
         strcat(filePath, "bin");             
     else
