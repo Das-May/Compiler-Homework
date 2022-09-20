@@ -11,11 +11,18 @@ class Handler
 public:
 	Handler();
 	
-	char* compress(char* c);
-	string myCharToString(char c);
-	void processAlphabet(char *begin, char *end);
-	char* myStringToChar(string s);
+	/*压缩原则：
+	* 一般ASCII码		以0开头，后接7位编码，共8位（也就是ASCII码）
+	* 关键字			以1开头，后接7位编码，共8位（自主设计编码）
+	*/
+	char* compress(char* c);						// 压缩函数
+	string myCharToString(char c);					// char二进制码转string01字符串
+	string processField(char *begin, char *end);	//
+	char* myStringToChar(string s);					// string01字符串转char二进制码
 
-	char* decompress(char* c);
+	/*解压原则：
+	* 
+	*/
+	char* decompress(char* c);						// 解压函数
 };
 
