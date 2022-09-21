@@ -1,18 +1,13 @@
 #include "Loader.h"
 
-Loader::Loader()
-{
-    SetConsoleOutputCP(936);
-}
-
 char* Loader::Input(const char* filePath)    
 {
     // 判断文件类型
-    int type = 0;                   // type=0,读入bin文件
+    int type = 0;           // type=0,读入bin文件
     int len = strlen(filePath);
     if (filePath[len - 4] == '.' && filePath[len - 3] == 'c' &&
         filePath[len - 2] == 'p' && filePath[len - 1] == 'p')
-        type = 1;                   // type=1,读入cpp文件
+        type = 1;           // type=1,读入cpp文件
     cout << "输入type: " << type << endl;
 
     // 打开文件
@@ -54,19 +49,19 @@ char* Loader::Input(const char* filePath)
 void Loader::Output(const char* processed)    
 {
     //判断文件类型
-    int type = 0;                       // type=0，导出cpp文件
+    int type = 0;           // type=0，导出cpp文件
     int len = strlen(filePath);
     if (filePath[len - 4] == '.' && filePath[len - 3] == 'c' &&
         filePath[len - 2] == 'p' && filePath[len - 1] == 'p')
-        type = 1;                       // type=1,导出bin文件
+        type = 1;           // type=1,导出bin文件
 
     // 处理文件保存路径
-    len = strlen(filePath) - 3;          
-    filePath[len] = '\0';                          // 截掉
-    if(type)                                    // 追加
-        strcat(filePath, "bin");             
+    len = strlen(filePath) - 4;          
+    filePath[len] = '\0';   // 截掉
+    if(type)                // 追加
+        strcat(filePath, "-compress.bin");             
     else
-        strcat(filePath, "cpp");
+        strcat(filePath, "-decompress.cpp");
     cout << "文件保存路径： " << filePath << endl;
 
     // 保存文件
@@ -75,7 +70,7 @@ void Loader::Output(const char* processed)
         file.open(filePath, ios::out | ios::binary);
     else
         file.open(filePath, ios::out);
-    if (!file)    // 如果打开失败
+    if (!file)              // 如果打开失败
     {
         cerr << "文件写入失败！" << endl;
         abort();

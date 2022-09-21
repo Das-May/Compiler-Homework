@@ -8,13 +8,14 @@ using namespace std;
 int main()
 {
     Loader l;
-    char* c = l.Input("01Chinese.cpp");
+    char* c = l.Input("05Comprehensive-short.cpp");
     Handler h;
     c = h.compress(c);
     cout << "(main函数)压缩后的内容为:" << c << endl;
     l.Output(c);
 
-    c = l.Input("01Chinese.bin");
+    c = l.Input("05Comprehensive-short-compress.bin");
     c = h.decompress(c);
     cout << "解压后的内容为：" << c << endl;
+    l.Output(c);
 }

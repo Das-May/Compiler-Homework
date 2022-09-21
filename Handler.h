@@ -2,11 +2,10 @@
 #include <map>
 #include <iostream>
 #include <string>
-#include <windows.h>//SetConsoleOutputCP函数所在库函数，让cmd程序的编码更为utf-8
 using namespace std;
 class Handler
 {
-	map<const char, const char*> word;
+	map<const char, string> word;
 
 public:
 	Handler();
@@ -17,11 +16,12 @@ public:
 	*/
 	char* compress(char* c);						// 压缩函数
 	string myCharToString(char c);					// char二进制码转string01字符串
-	string processField(char *begin, char *end);	//
+	string processField(char *begin, char *end);	// 处理字段
 	char* myStringToChar(string s);					// string01字符串转char二进制码
 
-	/*解压原则：
-	* 
+	/*解压原则：对于每个8位二进制码
+	* 以0开头		只接输出该ASCII码对应的字符
+	* 以1开头		查找映射表，输出对应的关键字
 	*/
 	char* decompress(char* c);						// 解压函数
 };
