@@ -2,7 +2,7 @@
 
 Handler::Handler()
 {
-	// ¹Ø¼ü×Ö 63¸ö ±àÂë´Ó80µ½be
+	// å…³é”®å­— 63ä¸ª ç¼–ç ä»80åˆ°be
 #pragma region KEYWORD
 	word[0x80] = "asm";
 	word[0x81] = "auto";
@@ -76,59 +76,60 @@ Handler::Handler()
 	word[0xbe] = "while";
 #pragma endregion
 
-	// ÔËËã·û
-	/*·ÅÆú±àÂë£ºÒòÎªÔËËã·û¶¼²»ÊÇºÜ³¤£¬Ö±½ÓÊä³öÒ²¿ÉÒÔ£¬Îª´ËÌØÒâ±àÂëËÆºõĞÔ¼Û±È²»¸ß*/
+	// è¿ç®—ç¬¦
+	/*æ”¾å¼ƒç¼–ç ï¼šå› ä¸ºè¿ç®—ç¬¦éƒ½ä¸æ˜¯å¾ˆé•¿ï¼Œç›´æ¥è¾“å‡ºä¹Ÿå¯ä»¥ï¼Œä¸ºæ­¤ç‰¹æ„ç¼–ç ä¼¼ä¹æ€§ä»·æ¯”ä¸é«˜*/
 
 }
 
 char* Handler::compress(char* c)
 {
 	char* headOfC = c;
-	string temp;		// ¼ÇÂ¼ÒªĞ´ÈëÎÄ¼şµÄËùÓĞ×Ö½ÚÂë
+    string temp;                    // è®°å½•è¦å†™å…¥æ–‡ä»¶çš„æ‰€æœ‰å­—èŠ‚ç 
 
-	for (; *c != 0; c++)			// ±éÀúÃ¿¸ö×Ö·û
+	for (; *c != 0; c++)			// éå†æ¯ä¸ªå­—ç¬¦
 	{
-		// Óöµ½Ğ¡Ğ´×ÖÄ¸£¬ÒÉËÆ¹Ø¼ü×Ö£¬ÏÈÉ¨ÃèÔÙĞ´Èë
+		// é‡åˆ°å°å†™å­—æ¯ï¼Œç–‘ä¼¼å…³é”®å­—ï¼Œå…ˆæ‰«æå†å†™å…¥
 		if (*c >= 'a' && *c <= 'z')
 		{
 		char* begin = c;
 		while ((*c >= 'a' && *c <= 'z') || *c == '_')
 			c++;
 		char* end = c;
-		c--;//±©À×!!!!!!
+        c--;// !
 		temp += processField(begin, end);
 		}
 		
-		// Óöµ½ĞŞÊÎ·û£¬²»×ö´¦Àí
+		// é‡åˆ°ä¿®é¥°ç¬¦ï¼Œä¸åšå¤„ç†
 		else if (*c == ' ' || *c == '\n' || *c == '\t')
 		{}
 
-		// Óöµ½×¢ÊÍ£¬¡°ÔÚ½áÊø·ûÖ®Ç°¡±µÄ·¶Î§ÄÚ£¬Ö±½ÓÌø¹ı£¨É¾³ı£©
+		// é‡åˆ°æ³¨é‡Šï¼Œâ€œåœ¨ç»“æŸç¬¦ä¹‹å‰â€çš„èŒƒå›´å†…ï¼Œç›´æ¥è·³è¿‡ï¼ˆåˆ é™¤ï¼‰
 		else if (*c == '/')
 		{
-			if (c[1] == '/')		// µ¥ĞĞ×¢ÊÍ"//"
+			if (c[1] == '/')		// å•è¡Œæ³¨é‡Š"//"
 			{
-				while (*c != '\n' && *c != 0)//×¢Òâ£ºÅĞ¶ÏÖ¸ÕëÊÇ·ñÔ½½ç
+				while (*c != '\n' && *c != 0)//æ³¨æ„ï¼šåˆ¤æ–­æŒ‡é’ˆæ˜¯å¦è¶Šç•Œ
 					c++;
 			}
-			else if (c[1] == '*')	// ¶àĞĞ×¢ÊÍ"/**/"
+			else if (c[1] == '*')	// å¤šè¡Œæ³¨é‡Š"/**/"
 			{
 				while (!(*c == '*' && c[1] == '/') && *c != 0)
 					c++;
-				c++;// ×¢Òâ£ºÓÉÓÚ*/ÊÇÁ½¸ö×Ö·û£¬Ö¸ÕëÒªÒÆ¶¯Á½Î»
+				c++;// æ³¨æ„ï¼šç”±äº*/æ˜¯ä¸¤ä¸ªå­—ç¬¦ï¼ŒæŒ‡é’ˆè¦ç§»åŠ¨ä¸¤ä½
 			}
-			else					// ²»ÊÇ×¢ÊÍ
-				temp += myCharToString(*c);	// Ö±½ÓĞ´ÈëASCIIÂë
+			else					// ä¸æ˜¯æ³¨é‡Š
+				temp += myCharToString(*c);	// ç›´æ¥å†™å…¥ASCIIç 
 		}
 	
-		//ÔÚ×¢ÊÍÇøÓòÒÔÍâÓöµ½ÖĞÎÄ£¬Á¢¼´±¨´í£¬Ç¿ÖÆÖĞÖ¹
+		//åœ¨æ³¨é‡ŠåŒºåŸŸä»¥å¤–é‡åˆ°ä¸­æ–‡ï¼Œç«‹å³æŠ¥é”™ï¼Œå¼ºåˆ¶ä¸­æ­¢
 		else if ((*c & 0x80) != 0)
 		{
-			cerr << "´úÂëÎÄ¼şÖĞ£¬²»¿É³öÏÖ³ıÁË×¢ÊÍÒÔÍâµÄÖĞÎÄ£¡ " << endl;
-			abort();
+			cerr << "ä»£ç æ–‡ä»¶ä¸­ï¼Œä¸å¯å‡ºç°é™¤äº†æ³¨é‡Šä»¥å¤–çš„ä¸­æ–‡ï¼ " << endl;
+            return 0;
+            //abort();
 		}
 
-		//Óöµ½ÆäËü×Ö·û£¬Ö±½ÓĞ´Èë
+		//é‡åˆ°å…¶å®ƒå­—ç¬¦ï¼Œç›´æ¥å†™å…¥
 		else
 		{
 			temp += myCharToString(*c);
@@ -136,11 +137,11 @@ char* Handler::compress(char* c)
 	}
 	
 
-	//ÄÚ´æ»ØÊÕ
+	//å†…å­˜å›æ”¶
 	delete headOfC;
 
-	//·µ»ØÑ¹ËõºÃµÄÄÚÈİ£¨¶ş½øÖÆÂë£©
-	cout << "(Ààº¯ÊıÄÚ)Ñ¹ËõºóµÄÄÚÈİÎª£º " << temp << endl;
+	//è¿”å›å‹ç¼©å¥½çš„å†…å®¹ï¼ˆäºŒè¿›åˆ¶ç ï¼‰
+	cout << "(ç±»å‡½æ•°å†…)å‹ç¼©åçš„å†…å®¹ä¸ºï¼š " << temp << endl;
 
 	c = myStringToChar(temp);
 	return c;
@@ -159,14 +160,14 @@ string Handler::myCharToString(char c)
 
 string Handler::processField(char* begin, char* end)
 {
-	// »ñÈ¡¶ÔÓ¦µÄ´úÂë¶Î
+	// è·å–å¯¹åº”çš„ä»£ç æ®µ
 	string strCode = "";
 	for (;begin != end; begin++)
 	{
 		strCode += *begin;
 	}
 
-	// ±éÀú×Öµä£¬Èç¹ûÊÇ¹Ø¼ü×Ö£¬Ôò·µ»Ø¹Ø¼ü×Ö¶ÔÓ¦µÄ8Î»¶ş½øÖÆÂë
+	// éå†å­—å…¸ï¼Œå¦‚æœæ˜¯å…³é”®å­—ï¼Œåˆ™è¿”å›å…³é”®å­—å¯¹åº”çš„8ä½äºŒè¿›åˆ¶ç 
 	map<const char, string>::iterator it;
 	for (it = word.begin(); it != word.end(); it++)
 	{
@@ -176,7 +177,7 @@ string Handler::processField(char* begin, char* end)
 		}
 	}
 
-	// Èç¹û²»ÊÇ¹Ø¼ü×Ö£¬ÔòÖğ×Ö·û×ª»¯Îª8Î»01×Ö·û´®
+	// å¦‚æœä¸æ˜¯å…³é”®å­—ï¼Œåˆ™é€å­—ç¬¦è½¬åŒ–ä¸º8ä½01å­—ç¬¦ä¸²
 	string str01 = "";
 	for (int i = 0; i < strCode.length(); i++)
 	{
@@ -187,24 +188,24 @@ string Handler::processField(char* begin, char* end)
 
 char* Handler::myStringToChar(string s)
 {
-	// »ñÈ¡×Ö·û´®³¤¶È
-	int len1 = s.length();	// stringµÄ×Ö·û´®³¤¶È
-	int len2 = len1 / 8;// charÊı×éµÄ³¤¶È
-	if (len1 % 8 != 0)		// ²»×ã8Î»£¬Ò²½ø1
+	// è·å–å­—ç¬¦ä¸²é•¿åº¦
+	int len1 = s.length();	// stringçš„å­—ç¬¦ä¸²é•¿åº¦
+	int len2 = len1 / 8;// charæ•°ç»„çš„é•¿åº¦
+	if (len1 % 8 != 0)		// ä¸è¶³8ä½ï¼Œä¹Ÿè¿›1
 	{
 		len2++;
 	}
 		
-	// ´´½¨×Ö·ûÊı×é ×îºóÒ»Î»Áô½áÊø·û'\0'
+	// åˆ›å»ºå­—ç¬¦æ•°ç»„ æœ€åä¸€ä½ç•™ç»“æŸç¬¦'\0'
 	char* c = new char[len2 + 1];
 	char* headOfChar = &*c;
 	std::memset(c, 0, len2 + 1);
 
-	// ±éÀústring
+	// éå†string
 	string::iterator it = s.begin();
 	while (it != s.end())
 	{
-		for (int j = 0; j < 8; j++)			// Ã¿8¸ö01×Ö·û£¬Ğ´Èë1¸öchar
+		for (int j = 0; j < 8; j++)			// æ¯8ä¸ª01å­—ç¬¦ï¼Œå†™å…¥1ä¸ªchar
 		{
 			if (it != s.end())
 			{
@@ -226,7 +227,7 @@ char* Handler::decompress(char* c)
 	int i = 0, j = 0, tabCount = 0;
 	int len = strlen(headOfC);
 
-	// °Ñ¶Áµ½µÄ¶ş½øÖÆ×ª»¯Îª01×Ö·û´®
+	// æŠŠè¯»åˆ°çš„äºŒè¿›åˆ¶è½¬åŒ–ä¸º01å­—ç¬¦ä¸²
 	string str01 = "";					
 	for(i=0;i< len;i++)
 	{
@@ -235,21 +236,21 @@ char* Handler::decompress(char* c)
 	}
 	len = str01.length();
 
-	// °Ñ01×Ö·û´®½âÑ¹»¯Îª´úÂë
+	// æŠŠ01å­—ç¬¦ä¸²è§£å‹åŒ–ä¸ºä»£ç 
 	string strCode = "";
 	string temp01 = "";
 	char tempChar = 0;
 	i = 0;
 	while(i < len)
 	{
-		if (str01[i] == '0') // ASCIIÂë
+		if (str01[i] == '0') // ASCIIç 
 		{
 			for (temp01 = "", j = 0; j < 8; j++, i++)
 				temp01 += str01[i];
 			tempChar = *myStringToChar(temp01);
 			
 
-			// ºóÆÚĞŞÊÎ
+			// åæœŸä¿®é¥°
 			switch (tempChar)
 			{
 			case ';':
@@ -277,7 +278,7 @@ char* Handler::decompress(char* c)
 				break;
 			}				
 		}
-		else				  // ¹Ø¼ü×Ö
+		else				  // å…³é”®å­—
 		{
 			for (temp01 = "", j = 0; j < 8; j++, i++)
 				temp01 += str01[i];

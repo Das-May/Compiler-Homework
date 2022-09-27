@@ -1,16 +1,16 @@
 #include "Loader.h"
 
-char* Loader::Input(const char* filePath)    
+char* Loader::Input(const char* filePath)
 {
-    // ÅĞ¶ÏÎÄ¼şÀàĞÍ
-    int type = 0;           // type=0,¶ÁÈëbinÎÄ¼ş
+    // åˆ¤æ–­æ–‡ä»¶ç±»å‹
+    int type = 0;           // type=0,è¯»å…¥binæ–‡ä»¶
     int len = strlen(filePath);
     if (filePath[len - 4] == '.' && filePath[len - 3] == 'c' &&
         filePath[len - 2] == 'p' && filePath[len - 1] == 'p')
-        type = 1;           // type=1,¶ÁÈëcppÎÄ¼ş
-    cout << "ÊäÈëtype: " << type << endl;
+        type = 1;           // type=1,è¯»å…¥cppæ–‡ä»¶
+    cout << "è¾“å…¥type: " << type << endl;
 
-    // ´ò¿ªÎÄ¼ş
+    // æ‰“å¼€æ–‡ä»¶
     ifstream file;
     if (type)
         file.open(filePath, ios::in);
@@ -18,70 +18,76 @@ char* Loader::Input(const char* filePath)
         file.open(filePath, ios::in | ios::binary);
     if (!file)
     {
-        cerr << "ÎÄ¼ş¶ÁÈ¡Ê§°Ü£¡" << endl;
-        abort();
+        cerr << "æ–‡ä»¶è¯»å–å¤±è´¥ï¼" << endl;
+        return 0;
+        //abort();
     }
 
-    // ¼ÇÂ¼ÎÄ¼ş¶ÁÈ¡Â·¾¶
+    // è®°å½•æ–‡ä»¶è¯»å–è·¯å¾„
     this->filePath = new char[strlen(filePath) + 1];
     strcpy(this->filePath, filePath);
-    cout << "ÎÄ¼ş¶ÁÈ¡Â·¾¶£º " << filePath << endl;
+    cout << "æ–‡ä»¶è¯»å–è·¯å¾„ï¼š " << filePath << endl;
 
-    // »ñÈ¡ÎÄ±¾³¤¶È
+    // è·å–æ–‡æœ¬é•¿åº¦
     file.seekg(0, ios::end);
     len = file.tellg();
-    cout << "ÎÄ¼şÄÚÈİ³¤¶È£º " << len << endl;
+    cout << "æ–‡ä»¶å†…å®¹é•¿åº¦ï¼š " << len << endl;
 
-    // »ñÈ¡ÎÄ±¾ÄÚÈİ
+    // è·å–æ–‡æœ¬å†…å®¹
     file.seekg(0, ios::beg);
     char* c = new char[ len + 1 ];
     memset(c, 0, len + 1);
     file.read(c,len);
-    cout << "ÎÄ¼şÄÚÈİ£º " << c << endl;
+    cout << "æ–‡ä»¶å†…å®¹ï¼š " << c << endl;
 
-    // ¹Ø±ÕÎÄ¼ş
+    // å…³é—­æ–‡ä»¶
     file.close();
 
-    //·µ»ØcharÖ¸Õë
+    //è¿”å›charæŒ‡é’ˆ
     return c;
 }
 
 void Loader::Output(const char* processed)    
 {
-    //ÅĞ¶ÏÎÄ¼şÀàĞÍ
-    int type = 0;           // type=0£¬µ¼³öcppÎÄ¼ş
+    //åˆ¤æ–­æ–‡ä»¶ç±»å‹
+    int type = 0;           // type=0ï¼Œå¯¼å‡ºcppæ–‡ä»¶
     int len = strlen(filePath);
     if (filePath[len - 4] == '.' && filePath[len - 3] == 'c' &&
         filePath[len - 2] == 'p' && filePath[len - 1] == 'p')
-        type = 1;           // type=1,µ¼³öbinÎÄ¼ş
+        type = 1;           // type=1,å¯¼å‡ºbinæ–‡ä»¶
 
-    // ´¦ÀíÎÄ¼ş±£´æÂ·¾¶
+    // å¤„ç†æ–‡ä»¶ä¿å­˜è·¯å¾„
     len = strlen(filePath) - 4;          
-    filePath[len] = '\0';   // ½Øµô
-    if(type)                // ×·¼Ó
+    filePath[len] = '\0';   // æˆªæ‰
+    if(type)                // è¿½åŠ 
         strcat(filePath, "-compress.bin");             
     else
         strcat(filePath, "-decompress.cpp");
-    cout << "ÎÄ¼ş±£´æÂ·¾¶£º " << filePath << endl;
+    cout << "æ–‡ä»¶ä¿å­˜è·¯å¾„ï¼š " << filePath << endl;
 
-    // ±£´æÎÄ¼ş
+    // ä¿å­˜æ–‡ä»¶
     ofstream file;
     if (type)
         file.open(filePath, ios::out | ios::binary);
     else
         file.open(filePath, ios::out);
-    if (!file)              // Èç¹û´ò¿ªÊ§°Ü
+    if (!file)              // å¦‚æœæ‰“å¼€å¤±è´¥
     {
-        cerr << "ÎÄ¼şĞ´ÈëÊ§°Ü£¡" << endl;
+        cerr << "æ–‡ä»¶å†™å…¥å¤±è´¥ï¼" << endl;
         abort();
     }
 
     file.write(processed, strlen(processed));
     if (type)
-        cout << "Ñ¹Ëõ³É¹¦£¡" << endl;
+        cout << "å‹ç¼©æˆåŠŸï¼" << endl;
     else
-        cout << "½âÑ¹³É¹¦£¡" << endl;
+        cout << "è§£å‹æˆåŠŸï¼" << endl;
 
-    // ¹Ø±ÕÎÄ¼ş
+    // å…³é—­æ–‡ä»¶
     file.close();
+}
+
+char* Loader::GetFilepath()
+{
+    return filePath;
 }
