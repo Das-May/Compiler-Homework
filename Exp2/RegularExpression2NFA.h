@@ -37,9 +37,10 @@ struct NfaChunk {
 
 class RegularExpression2NFA
 {
-	NfaChunk Nfa;
+	NfaChunk Nfa_Graph;
 	int currentId;
-	vector<int> totalCondition;// 存储所有转移条件
+	vector<char> totalCondition;// 存储所有转移条件
+	vector<vector<int>> Nfa_Table;// 存储所有转移条件
 	bool** mark;//二维数组，用于在遍历的时候标记已路过的结点
 
 public:

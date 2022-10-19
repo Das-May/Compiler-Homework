@@ -5,7 +5,6 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 {
 	currentId = 0;
 	totalCondition.clear();
-	totalCondition.push_back(' ');
 	totalCondition.push_back('#');
 
 	stack<NfaChunk> s;
@@ -68,11 +67,11 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 		}
 	}
 
-	Nfa = s.top();
+	Nfa_Graph = s.top();
 	s.pop();
 	while (!s.empty())
 	{
-		Nfa = Connect(s.top(), Nfa);
+		Nfa_Graph = Connect(s.top(), Nfa_Graph);
 		s.pop();
 	}
 
@@ -175,12 +174,12 @@ void RegularExpression2NFA::PrintNfaGraph()
 		}
 	}
 
-	DFSPrint(Nfa.start);
+	DFSPrint(Nfa_Graph.start);
 }
 
 void RegularExpression2NFA::DFSPrint(NfaNode* root)
 {
-	if (root == Nfa.end)
+	if (root == Nfa_Graph.end)
 		return;
 
 	for (auto& nextNode : root->nextNode)
@@ -203,56 +202,68 @@ void RegularExpression2NFA::PrintNfaTable()
 	int col = totalCondition.size();
 	int row = currentId;
 	int i, j;
-	for (i = 1; i < row; i++)
+	vector<int> temp;
+	for (i = 0; i < row; i++)
 	{
-		totalCondition.push_back(i);
-		for (j = 1; j < col; j++)
+		for (j = 0; j < col; j++)
 		{
-			totalCondition.push_back(-1);
+			Nfa_Table.push_back(temp);
 		}
 	}
 
+
+	cout << '\t';
+	for (auto& condition : totalCondition)
+		cout << condition << '\t';
 	j = 0;
-	for (auto& id : totalCondition)
+	for (auto& id_set : Nfa_Table)
 	{
-		if(j >= col)
-			cout << id << '\t';
-		else
-			cout << char(id) << '\t';
-		j++;
 		if (j % col == 0)
 		{
-			cout << '\n';
+			cout << '\n' << j / col << '\t';
 		}
-		
-	}
+		for (auto& id : id_set)
+		{
+			cout << id << ',';
+		}
+		cout << '\t';
 
-	cout << "NFA图格式:" << endl;
+		j++;
+	}
+	
+	cout << "\nNFA图格式:" << endl;
 	mark = new bool* [currentId];
 	for (i = 0; i < currentId; i++)
 	{
 		mark[i] = new bool[currentId];
+		for (j = 0; j < currentId; j++)
+			mark[i][j] = false;
 	}
-	DFSPrint_table(Nfa.start);
+	DFSPrint_table(Nfa_Graph.start);
 
+	cout << '\t';
+	for (auto& condition : totalCondition)
+		cout << condition << '\t';
 	j = 0;
-	for (auto& id : totalCondition)
+	for (auto& id_set : Nfa_Table)
 	{
-		if (j >= col)
-			cout << id << '\t';
-		else
-			cout << char(id) << '\t';
-		j++;
 		if (j % col == 0)
 		{
-			cout << '\n';
+			cout << '\n' << j / col << '\t';
 		}
+		for (auto& id : id_set)
+		{
+			cout << id << ',';
+		}
+		cout << '\t';
+
+		j++;
 	}
 }
 
 void RegularExpression2NFA::DFSPrint_table(NfaNode* root)
 {
-	if (root == Nfa.end)
+	if (root == Nfa_Graph.end)
 		return;
 
 	for (auto& nextNode : root->nextNode)
@@ -260,8 +271,16 @@ void RegularExpression2NFA::DFSPrint_table(NfaNode* root)
 		if (mark[root->id][nextNode->id] == false)
 		{
 			mark[root->id][nextNode->id] = true;
-			totalCondition[root->id * nextNode->id + nextNode->id] = root->transition[nextNode];
-			DFSPrint(nextNode);
+			int i = 0;
+			for (auto& condition : totalCondition)
+			{
+				if (condition == root->transition[nextNode])
+				{
+					Nfa_Table[root->id * totalCondition.size() + i].push_back(nextNode->id);
+				}
+				i++;
+			}
+			DFSPrint_table(nextNode);
 		}
 
 	}
