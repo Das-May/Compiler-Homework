@@ -18,7 +18,7 @@ struct Table
 // 图结点
 struct NfaNode {
 	int id;
-	vector<NfaNode*> nextNode;
+	vector<NfaNode*> nextNode;		// 下一结点
 	map<NfaNode*, char> transition; // 下一结点 与 转移条件
 };
 
@@ -39,7 +39,8 @@ class RegularExpression2NFA
 {
 	NfaChunk Nfa;
 	int currentId;
-	vector<int> mark;//用于在遍历的时候标记已路过的结点
+	vector<int> totalCondition;// 存储所有转移条件
+	bool** mark;//二维数组，用于在遍历的时候标记已路过的结点
 
 public:
 
@@ -50,11 +51,12 @@ public:
 	NfaChunk Expand_zero(NfaChunk a);
 	NfaChunk Expand_one(NfaChunk a);
 
-	NfaChunk Conetct(NfaChunk a, NfaChunk b);
+	NfaChunk Connect(NfaChunk a, NfaChunk b);
 
 	void PrintNfaGraph();
 	void DFSPrint(NfaNode* root);
 	void PrintNfaTable();
+	void DFSPrint_table(NfaNode* root);
 
 };
 
