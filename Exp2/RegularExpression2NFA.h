@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stack>
 #include <queue>
+#include <set>
 using namespace std;
 
 // 表格
@@ -38,10 +39,12 @@ struct NfaChunk {
 class RegularExpression2NFA
 {
 	NfaChunk Nfa_Graph;
-	int currentId;
-	vector<char> totalCondition;// 存储所有转移条件
-	vector<vector<int>> Nfa_Table;// 存储所有转移条件
-	bool** mark;//二维数组，用于在遍历的时候标记已路过的结点
+	int maxId;
+	vector<char> totalCondition;	// 存储所有转移条件
+	vector<vector<int>> Nfa_Table;	// NFA表
+	bool** mark;					// 二维数组，用于在遍历的时候标记已路过的结点
+	vector<vector<int>> Dfa_Table;	// DFA表
+	vector<int> MinDfa_Table;	// 最小化DFA表
 
 public:
 
@@ -51,6 +54,7 @@ public:
 	NfaChunk Or(NfaChunk a, NfaChunk b);
 	NfaChunk Expand_zero(NfaChunk a);
 	NfaChunk Expand_one(NfaChunk a);
+	NfaChunk Choose(NfaChunk a);
 
 	NfaChunk Connect(NfaChunk a, NfaChunk b);
 
@@ -58,6 +62,11 @@ public:
 	void DFSPrint(NfaNode* root);
 	void PrintNfaTable();
 	void DFSPrint_table(NfaNode* root);
+
+	void GetDFA();
+
+	void GetMinDFA();
+
 
 };
 

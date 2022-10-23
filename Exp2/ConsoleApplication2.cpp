@@ -7,7 +7,8 @@ int main()
 {
     RegularExpression2NFA re;
     //re.GetNFA("a*");
-    re.GetNFA("(a|b)");
+    re.GetNFA("a(a|b)");
+    re.GetDFA();
     return 0;
 }
 

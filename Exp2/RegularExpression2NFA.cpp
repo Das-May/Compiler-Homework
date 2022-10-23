@@ -3,7 +3,7 @@
 
 void RegularExpression2NFA::GetNFA(string RegularExpression)
 {
-	currentId = 0;
+	maxId = 0;
 	totalCondition.clear();
 	totalCondition.push_back('#');
 
@@ -85,10 +85,10 @@ NfaChunk RegularExpression2NFA::And(char c)
 	NfaChunk andChunk;
 	NfaNode* midNode = new NfaNode();
 
-	andChunk.start->id	= currentId;					// 分配id
-	midNode		  ->id	= currentId + 1;
-	andChunk.end  ->id	= currentId + 2;
-	currentId += 3;
+	andChunk.start->id	= maxId;					// 分配id
+	midNode		  ->id	= maxId + 1;
+	andChunk.end  ->id	= maxId + 2;
+	maxId += 3;
 		
 	andChunk.start->nextNode.push_back(midNode);	//连接
 	andChunk.start->transition[midNode] = '#';
@@ -102,8 +102,8 @@ NfaChunk RegularExpression2NFA::Or(NfaChunk a, NfaChunk b)
 {
 	// 创建新起点，并连接a块的起点
 	NfaNode* newStartNode = new NfaNode();
-	newStartNode->id = currentId;
-	currentId++;
+	newStartNode->id = maxId;
+	maxId++;
 	newStartNode->nextNode.push_back(a.start);
 	newStartNode->transition[a.start] = '#';
 	//以a块的起点未分支点，连接b块的第二个节点
@@ -112,8 +112,8 @@ NfaChunk RegularExpression2NFA::Or(NfaChunk a, NfaChunk b)
 	delete b.start;
 	// 创建新终点,并将a块和b块的终点汇集过去
 	NfaNode* newEndNode = new NfaNode();
-	newEndNode->id = currentId;
-	currentId++;
+	newEndNode->id = maxId;
+	maxId++;
 	a.end->nextNode.push_back(newEndNode);
 	a.end->transition[newEndNode] = '#';
 	b.end->nextNode.push_back(newEndNode);
@@ -133,8 +133,8 @@ NfaChunk RegularExpression2NFA::Expand_zero(NfaChunk a)
 	a.end->transition[midNode] = '#';
 	// 往后大绕,转移条件为epsilon
 	NfaNode* newEndNode = new NfaNode();		
-	newEndNode->id		= currentId;
-	currentId++;
+	newEndNode->id		= maxId;
+	maxId++;
 	a.end->nextNode.push_back(newEndNode);
 	a.end->transition[newEndNode] = '#';
 	// 返回新块
@@ -161,14 +161,14 @@ NfaChunk RegularExpression2NFA::Connect(NfaChunk head, NfaChunk tail)
 void RegularExpression2NFA::PrintNfaGraph()
 {
 	cout << "NFA图格式:" << endl;
-	mark = new bool*[currentId];
-	for (int i = 0; i < currentId; i++)
+	mark = new bool*[maxId];
+	for (int i = 0; i < maxId; i++)
 	{
-		mark[i] = new bool[currentId];
+		mark[i] = new bool[maxId];
 	}
-	for (int i = 0; i < currentId; i++)
+	for (int i = 0; i < maxId; i++)
 	{
-		for (int j = 0; j < currentId; j++)
+		for (int j = 0; j < maxId; j++)
 		{
 			mark[i][j] = false;
 		}
@@ -200,7 +200,7 @@ void RegularExpression2NFA::PrintNfaTable()
 {
 	// 初始化表格容器
 	int col = totalCondition.size();
-	int row = currentId;
+	int row = maxId;
 	int i, j;
 	vector<int> temp;
 	for (i = 0; i < row; i++)
@@ -211,7 +211,8 @@ void RegularExpression2NFA::PrintNfaTable()
 		}
 	}
 
-
+	/*
+	// 试打印
 	cout << '\t';
 	for (auto& condition : totalCondition)
 		cout << condition << '\t';
@@ -229,14 +230,14 @@ void RegularExpression2NFA::PrintNfaTable()
 		cout << '\t';
 
 		j++;
-	}
+	}*/
 	
-	cout << "\nNFA图格式:" << endl;
-	mark = new bool* [currentId];
-	for (i = 0; i < currentId; i++)
+	cout << "\nNFA表格式:" << endl;
+	mark = new bool* [maxId];
+	for (i = 0; i < maxId; i++)
 	{
-		mark[i] = new bool[currentId];
-		for (j = 0; j < currentId; j++)
+		mark[i] = new bool[maxId];
+		for (j = 0; j < maxId; j++)
 			mark[i][j] = false;
 	}
 	DFSPrint_table(Nfa_Graph.start);
@@ -286,4 +287,161 @@ void RegularExpression2NFA::DFSPrint_table(NfaNode* root)
 	}
 
 
+}
+
+void RegularExpression2NFA::GetDFA()
+{
+	int col = totalCondition.size();
+	int currentId;//当前的id值，同时也是Nfa_Table的行索引号
+	int currentRow = -1;//当前Dfa_Table的行索引号
+	int i = 0;
+	vector<int> temp, latest;
+	queue<int> q;
+	queue<vector<int>> colQueue;
+
+	// 初始化
+	// 从Nfa_Graph.start开始，把epsilon能到达的所有id放进DFA容器里，此为第一列的第一个DFA图结点
+	currentId = Nfa_Graph.start->id;
+	temp.push_back(currentId);
+	q.push(currentId);
+
+	while (!q.empty())
+	{
+		currentId = q.front();
+		q.pop();
+		for (auto& id : Nfa_Table[currentId * col])
+		{
+			temp.push_back(id);
+			q.push(id);
+		}
+	}
+	colQueue.push(temp);
+
+	/*循环*/
+	while (!colQueue.empty())
+	{
+		latest = colQueue.front();
+		colQueue.pop();
+
+		Dfa_Table.push_back(latest);
+		currentRow++;
+
+		// 初始化后续的条件转移后的id容器
+		temp.clear();
+		for (i = 1; i < col; i++)
+		{
+			Dfa_Table.push_back(temp);
+		}
+
+		// 遍历DFA第一列的最新容器的id，获取对应的NFA条件列的id，追加到DFA条件列【注意去重】
+		for (auto& id : latest)
+		{
+			for (i = 1; i < col; i++)
+			{
+				for (auto id2 : Nfa_Table[id * col + i])
+				{
+					Dfa_Table[currentRow * col + i].push_back(id2);
+				}
+			}
+
+		}
+		for (i = 1; i < col; i++)
+		{
+			set<int> s(Dfa_Table[currentRow * col + i].begin(), Dfa_Table[currentRow * col + i].end());
+			Dfa_Table[currentRow * col + i].assign(s.begin(), s.end());
+		}
+
+		// 遍历条件列的id，追加epsilon能到达的所有id【注意去重】
+		for (i = 1; i < col; i++)
+		{
+			while (!q.empty())// 清空队列
+				q.pop();
+
+			for (auto& id : Dfa_Table[currentRow * col + i])//遍历条件列的id
+				q.push(id);
+
+			while (!q.empty())//追加epsilon能到达的所有id
+			{
+				currentId = q.front();
+				q.pop();
+
+				for (auto id : Nfa_Table[currentId * col])//epsilon列
+				{
+					if (find(Dfa_Table[currentRow * col + i].begin(), Dfa_Table[currentRow * col + i].end(), id)
+						== Dfa_Table[currentRow * col + i].end())// 去重：容器中还没有这个id
+					{
+						Dfa_Table[currentRow * col + i].push_back(id);//则追加id
+						q.push(id);
+					}
+					
+				}
+			}
+		}
+			
+
+		// 取条件列的容器，若不为空，且若此前第一列中没有相等的列，则放进第一列
+		for (i = 1; i < col; i++)
+		{
+			bool tag = true;
+			for (int j = 0; j < currentRow; j++)
+			{
+				if (Dfa_Table[currentRow * col + i] == Dfa_Table[j * col])
+				{
+					tag = false;
+					break;
+				}
+			}
+
+			if (tag && Dfa_Table[currentRow * col + i].size() != 0)
+				colQueue.push(Dfa_Table[currentRow * col + i]);
+		}
+
+		// 若为空，或第一列中已存在相等列，则不放进
+	}
+
+	/*输出*/
+	cout << "\nDFA表格式:" << endl;
+	for (auto& condition : totalCondition)
+		cout << condition << '\t';
+	i = 0;
+	for (auto& id_set : Dfa_Table)
+	{
+		if (i % col == 0)
+			cout << '\n';
+
+		for (auto& id : id_set)
+		{
+			cout << id << ',';
+		}
+		cout << '\t';
+		
+		i++;
+	}
+}
+
+void RegularExpression2NFA::GetMinDFA()
+{
+	/*重新整理*/
+	int currentId = 0;
+	map<vector<int>, int> m;
+	for (auto& v : Dfa_Table)
+	{
+		vector<vector<int>>::iterator it = find(Dfa_Table.begin(), v, v);
+		if (it == v.begin())
+		{
+			MinDfa_Table.push_back(currentId);
+			m[v] = currentId;
+			currentId++;
+		}
+		else
+		{
+			MinDfa_Table.push_back(m.find(it));
+		}
+			
+
+	}
+
+	/*一列一列地划分子集*/
+
+	/*查找*/
 }
