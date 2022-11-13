@@ -1,7 +1,7 @@
-#include "RegularExpression2NFA.h"
+ï»¿#include "RegularExpression2NFA.h"
 
 
-void RegularExpression2NFA::GetNFA(string RegularExpression)
+string RegularExpression2NFA::GetNFA(string RegularExpression)
 {
 	maxId = 0;
 	totalCondition.clear();
@@ -16,8 +16,8 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 		if (isalpha(c))
 		{
 			s.push(And(c));
-			if (std::count(totalCondition.begin(), totalCondition.end(), c) == 0)// Èç¹ûÈİÆ÷ÖĞ»¹¼ÇÂ¼¹ıÕâ¸ö×ªÒÆÌõ¼ş
-				totalCondition.push_back(c);//¼ÇÂ¼
+			if (std::count(totalCondition.begin(), totalCondition.end(), c) == 0)// å¦‚æœå®¹å™¨ä¸­è¿˜è®°å½•è¿‡è¿™ä¸ªè½¬ç§»æ¡ä»¶
+				totalCondition.push_back(c);//è®°å½•
 		}
 		else 
 		{
@@ -29,6 +29,10 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 				break;
 			case '+':
 				tempChunk = Expand_one(s.top());
+				s.pop();
+				break;
+			case '?':
+				tempChunk = Choose(s.top());
 				s.pop();
 				break;
 			case ')':
@@ -58,7 +62,7 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 						tempChunk = Or(tempChunk, tempChunk_2);
 					}					
 				}
-				s.pop(); // µ¯³ö'('
+				s.pop(); // å¼¹å‡º'('
 			default:
 				tempChunk.op = c;
 				break;
@@ -76,41 +80,42 @@ void RegularExpression2NFA::GetNFA(string RegularExpression)
 	}
 
 	PrintNfaGraph();
-	PrintNfaTable();
+	return PrintNfaTable();
 }
 
+#pragma region è¿ç®—ç¬¦å‡½æ•°
 NfaChunk RegularExpression2NFA::And(char c)
 {
-	// µ¥¸ö×Ö·û£¬»á²úÉúÈı¸öNFA½áµã
+	// å•ä¸ªå­—ç¬¦ï¼Œä¼šäº§ç”Ÿä¸‰ä¸ªNFAç»“ç‚¹
 	NfaChunk andChunk;
 	NfaNode* midNode = new NfaNode();
 
-	andChunk.start->id	= maxId;					// ·ÖÅäid
-	midNode		  ->id	= maxId + 1;
-	andChunk.end  ->id	= maxId + 2;
+	andChunk.start->id = maxId;					// åˆ†é…id
+	midNode->id = maxId + 1;
+	andChunk.end->id = maxId + 2;
 	maxId += 3;
-		
-	andChunk.start->nextNode.push_back(midNode);	//Á¬½Ó
+
+	andChunk.start->nextNode.push_back(midNode);	//è¿æ¥
 	andChunk.start->transition[midNode] = '#';
 	midNode->nextNode.push_back(andChunk.end);
 	midNode->transition[andChunk.end] = c;
-		
+
 	return andChunk;
 }
 
 NfaChunk RegularExpression2NFA::Or(NfaChunk a, NfaChunk b)
 {
-	// ´´½¨ĞÂÆğµã£¬²¢Á¬½Óa¿éµÄÆğµã
+	// åˆ›å»ºæ–°èµ·ç‚¹ï¼Œå¹¶è¿æ¥aå—çš„èµ·ç‚¹
 	NfaNode* newStartNode = new NfaNode();
 	newStartNode->id = maxId;
 	maxId++;
 	newStartNode->nextNode.push_back(a.start);
 	newStartNode->transition[a.start] = '#';
-	//ÒÔa¿éµÄÆğµãÎ´·ÖÖ§µã£¬Á¬½Ób¿éµÄµÚ¶ş¸ö½Úµã
+	//ä»¥aå—çš„èµ·ç‚¹æœªåˆ†æ”¯ç‚¹ï¼Œè¿æ¥bå—çš„ç¬¬äºŒä¸ªèŠ‚ç‚¹
 	a.start->nextNode.push_back(b.start->nextNode[0]);
 	a.start->transition[b.start->nextNode[0]] = '#';
 	delete b.start;
-	// ´´½¨ĞÂÖÕµã,²¢½«a¿éºÍb¿éµÄÖÕµã»ã¼¯¹ıÈ¥
+	// åˆ›å»ºæ–°ç»ˆç‚¹,å¹¶å°†aå—å’Œbå—çš„ç»ˆç‚¹æ±‡é›†è¿‡å»
 	NfaNode* newEndNode = new NfaNode();
 	newEndNode->id = maxId;
 	maxId++;
@@ -118,7 +123,7 @@ NfaChunk RegularExpression2NFA::Or(NfaChunk a, NfaChunk b)
 	a.end->transition[newEndNode] = '#';
 	b.end->nextNode.push_back(newEndNode);
 	b.end->transition[newEndNode] = '#';
-	// ·µ»ØĞÂ¿é
+	// è¿”å›æ–°å—
 	a.start = newStartNode;
 	a.end = newEndNode;
 	return a;
@@ -127,17 +132,19 @@ NfaChunk RegularExpression2NFA::Or(NfaChunk a, NfaChunk b)
 NfaChunk RegularExpression2NFA::Expand_zero(NfaChunk a)
 {
 	// *
-	// »ØÍ·ÈÆ,×ªÒÆÌõ¼şÎªepsilon
-	NfaNode* midNode = a.start->nextNode[0];	
+	// å›å¤´ç»•,è½¬ç§»æ¡ä»¶ä¸ºepsilon
+	NfaNode* midNode = a.start->nextNode[0];
 	a.end->nextNode.push_back(midNode);
 	a.end->transition[midNode] = '#';
-	// Íùºó´óÈÆ,×ªÒÆÌõ¼şÎªepsilon
-	NfaNode* newEndNode = new NfaNode();		
-	newEndNode->id		= maxId;
+	// å¾€åå¤§ç»•,è½¬ç§»æ¡ä»¶ä¸ºepsilon
+	NfaNode* newEndNode = new NfaNode();
+	newEndNode->id = maxId;
 	maxId++;
 	a.end->nextNode.push_back(newEndNode);
 	a.end->transition[newEndNode] = '#';
-	// ·µ»ØĞÂ¿é
+	a.start->nextNode.push_back(newEndNode);
+	a.start->transition[newEndNode] = '#';
+	// è¿”å›æ–°å—
 	a.end = newEndNode;
 	return a;
 }
@@ -146,21 +153,31 @@ NfaChunk RegularExpression2NFA::Expand_one(NfaChunk a)
 {
 	// +
 
-	return Connect(a, Expand_zero(a));//´íµÄ
+	return Connect(a, Expand_zero(a));//é”™çš„
+}
+
+NfaChunk RegularExpression2NFA::Choose(NfaChunk a)
+{
+	// ?
+	// ç›´æ¥åœ¨é¦–éƒ¨å’Œå°¾éƒ¨ä¹‹é—´åŠ ä¸€ä¸ªÎµè¿çº¿
+	a.start->nextNode.push_back(a.end);
+	a.start->transition[a.end] = '#';
+	return a;
 }
 
 NfaChunk RegularExpression2NFA::Connect(NfaChunk head, NfaChunk tail)
 {
-	head.end->nextNode   = tail.start->nextNode;// Á¬½Ó
+	head.end->nextNode = tail.start->nextNode;// è¿æ¥
 	head.end->transition = tail.start->transition;
 	delete tail.start;
-	head.end = tail.end;						// ¸üĞÂ
+	head.end = tail.end;						// æ›´æ–°
 	return head;
 }
+#pragma endregion
 
 void RegularExpression2NFA::PrintNfaGraph()
 {
-	cout << "NFAÍ¼¸ñÊ½:" << endl;
+	cout << "NFAå›¾æ ¼å¼:" << endl;
 	mark = new bool*[maxId];
 	for (int i = 0; i < maxId; i++)
 	{
@@ -196,9 +213,9 @@ void RegularExpression2NFA::DFSPrint(NfaNode* root)
 
 }
 
-void RegularExpression2NFA::PrintNfaTable()
+string RegularExpression2NFA::PrintNfaTable()
 {
-	// ³õÊ¼»¯±í¸ñÈİÆ÷
+	// åˆå§‹åŒ–è¡¨æ ¼å®¹å™¨
 	int col = totalCondition.size();
 	int row = maxId;
 	int i, j;
@@ -212,7 +229,7 @@ void RegularExpression2NFA::PrintNfaTable()
 	}
 
 	/*
-	// ÊÔ´òÓ¡
+	// è¯•æ‰“å°
 	cout << '\t';
 	for (auto& condition : totalCondition)
 		cout << condition << '\t';
@@ -232,7 +249,8 @@ void RegularExpression2NFA::PrintNfaTable()
 		j++;
 	}*/
 	
-	cout << "\nNFA±í¸ñÊ½:" << endl;
+	string s = "\n---NFAè¡¨æ ¼å¼:---\n";
+	//cout << "\nNFAè¡¨æ ¼å¼:" << endl;
 	mark = new bool* [maxId];
 	for (i = 0; i < maxId; i++)
 	{
@@ -242,24 +260,26 @@ void RegularExpression2NFA::PrintNfaTable()
 	}
 	DFSPrint_table(Nfa_Graph.start);
 
-	cout << '\t';
+	s += '\t';
 	for (auto& condition : totalCondition)
-		cout << condition << '\t';
+		s = s + condition + '\t';
 	j = 0;
 	for (auto& id_set : Nfa_Table)
 	{
 		if (j % col == 0)
 		{
-			cout << '\n' << j / col << '\t';
+			s = s + '\n' + to_string(j / col) + '\t';
 		}
 		for (auto& id : id_set)
 		{
-			cout << id << ',';
+			s = s + to_string(id) + ',';
 		}
-		cout << '\t';
+		s += '\t';
 
 		j++;
 	}
+	s += '\n';
+	return s;
 }
 
 void RegularExpression2NFA::DFSPrint_table(NfaNode* root)
@@ -289,18 +309,18 @@ void RegularExpression2NFA::DFSPrint_table(NfaNode* root)
 
 }
 
-void RegularExpression2NFA::GetDFA()
+string RegularExpression2NFA::GetDFA()
 {
 	int col = totalCondition.size();
-	int currentId;//µ±Ç°µÄidÖµ£¬Í¬Ê±Ò²ÊÇNfa_TableµÄĞĞË÷ÒıºÅ
-	int currentRow = -1;//µ±Ç°Dfa_TableµÄĞĞË÷ÒıºÅ
+	int currentId;//å½“å‰çš„idå€¼ï¼ŒåŒæ—¶ä¹Ÿæ˜¯Nfa_Tableçš„è¡Œç´¢å¼•å·
+	int currentRow = -1;//å½“å‰Dfa_Tableçš„è¡Œç´¢å¼•å·
 	int i = 0;
 	vector<int> temp, latest;
 	queue<int> q;
 	queue<vector<int>> colQueue;
 
-	// ³õÊ¼»¯
-	// ´ÓNfa_Graph.start¿ªÊ¼£¬°ÑepsilonÄÜµ½´ïµÄËùÓĞid·Å½øDFAÈİÆ÷Àï£¬´ËÎªµÚÒ»ÁĞµÄµÚÒ»¸öDFAÍ¼½áµã
+	// åˆå§‹åŒ–
+	// ä»Nfa_Graph.startå¼€å§‹ï¼ŒæŠŠepsilonèƒ½åˆ°è¾¾çš„æ‰€æœ‰idæ”¾è¿›DFAå®¹å™¨é‡Œï¼Œæ­¤ä¸ºç¬¬ä¸€åˆ—çš„ç¬¬ä¸€ä¸ªDFAå›¾ç»“ç‚¹
 	currentId = Nfa_Graph.start->id;
 	temp.push_back(currentId);
 	q.push(currentId);
@@ -317,7 +337,7 @@ void RegularExpression2NFA::GetDFA()
 	}
 	colQueue.push(temp);
 
-	/*Ñ­»·*/
+	/*å¾ªç¯*/
 	while (!colQueue.empty())
 	{
 		latest = colQueue.front();
@@ -326,14 +346,14 @@ void RegularExpression2NFA::GetDFA()
 		Dfa_Table.push_back(latest);
 		currentRow++;
 
-		// ³õÊ¼»¯ºóĞøµÄÌõ¼ş×ªÒÆºóµÄidÈİÆ÷
+		// åˆå§‹åŒ–åç»­çš„æ¡ä»¶è½¬ç§»åçš„idå®¹å™¨
 		temp.clear();
 		for (i = 1; i < col; i++)
 		{
 			Dfa_Table.push_back(temp);
 		}
 
-		// ±éÀúDFAµÚÒ»ÁĞµÄ×îĞÂÈİÆ÷µÄid£¬»ñÈ¡¶ÔÓ¦µÄNFAÌõ¼şÁĞµÄid£¬×·¼Óµ½DFAÌõ¼şÁĞ¡¾×¢ÒâÈ¥ÖØ¡¿
+		// éå†DFAç¬¬ä¸€åˆ—çš„æœ€æ–°å®¹å™¨çš„idï¼Œè·å–å¯¹åº”çš„NFAæ¡ä»¶åˆ—çš„idï¼Œè¿½åŠ åˆ°DFAæ¡ä»¶åˆ—ã€æ³¨æ„å»é‡ã€‘
 		for (auto& id : latest)
 		{
 			for (i = 1; i < col; i++)
@@ -351,26 +371,26 @@ void RegularExpression2NFA::GetDFA()
 			Dfa_Table[currentRow * col + i].assign(s.begin(), s.end());
 		}
 
-		// ±éÀúÌõ¼şÁĞµÄid£¬×·¼ÓepsilonÄÜµ½´ïµÄËùÓĞid¡¾×¢ÒâÈ¥ÖØ¡¿
+		// éå†æ¡ä»¶åˆ—çš„idï¼Œè¿½åŠ epsilonèƒ½åˆ°è¾¾çš„æ‰€æœ‰idã€æ³¨æ„å»é‡ã€‘
 		for (i = 1; i < col; i++)
 		{
-			while (!q.empty())// Çå¿Õ¶ÓÁĞ
+			while (!q.empty())// æ¸…ç©ºé˜Ÿåˆ—
 				q.pop();
 
-			for (auto& id : Dfa_Table[currentRow * col + i])//±éÀúÌõ¼şÁĞµÄid
+			for (auto& id : Dfa_Table[currentRow * col + i])//éå†æ¡ä»¶åˆ—çš„id
 				q.push(id);
 
-			while (!q.empty())//×·¼ÓepsilonÄÜµ½´ïµÄËùÓĞid
+			while (!q.empty())//è¿½åŠ epsilonèƒ½åˆ°è¾¾çš„æ‰€æœ‰id
 			{
 				currentId = q.front();
 				q.pop();
 
-				for (auto id : Nfa_Table[currentId * col])//epsilonÁĞ
+				for (auto id : Nfa_Table[currentId * col])//epsilonåˆ—
 				{
 					if (find(Dfa_Table[currentRow * col + i].begin(), Dfa_Table[currentRow * col + i].end(), id)
-						== Dfa_Table[currentRow * col + i].end())// È¥ÖØ£ºÈİÆ÷ÖĞ»¹Ã»ÓĞÕâ¸öid
+						== Dfa_Table[currentRow * col + i].end())// å»é‡ï¼šå®¹å™¨ä¸­è¿˜æ²¡æœ‰è¿™ä¸ªid
 					{
-						Dfa_Table[currentRow * col + i].push_back(id);//Ôò×·¼Óid
+						Dfa_Table[currentRow * col + i].push_back(id);//åˆ™è¿½åŠ id
 						q.push(id);
 					}
 					
@@ -379,7 +399,7 @@ void RegularExpression2NFA::GetDFA()
 		}
 			
 
-		// È¡Ìõ¼şÁĞµÄÈİÆ÷£¬Èô²»Îª¿Õ£¬ÇÒÈô´ËÇ°µÚÒ»ÁĞÖĞÃ»ÓĞÏàµÈµÄÁĞ£¬Ôò·Å½øµÚÒ»ÁĞ
+		// å–æ¡ä»¶åˆ—çš„å®¹å™¨ï¼Œè‹¥ä¸ä¸ºç©ºï¼Œä¸”è‹¥æ­¤å‰ç¬¬ä¸€åˆ—ä¸­æ²¡æœ‰ç›¸ç­‰çš„åˆ—ï¼Œåˆ™æ”¾è¿›ç¬¬ä¸€åˆ—
 		for (i = 1; i < col; i++)
 		{
 			bool tag = true;
@@ -396,52 +416,162 @@ void RegularExpression2NFA::GetDFA()
 				colQueue.push(Dfa_Table[currentRow * col + i]);
 		}
 
-		// ÈôÎª¿Õ£¬»òµÚÒ»ÁĞÖĞÒÑ´æÔÚÏàµÈÁĞ£¬Ôò²»·Å½ø
+		// è‹¥ä¸ºç©ºï¼Œæˆ–ç¬¬ä¸€åˆ—ä¸­å·²å­˜åœ¨ç›¸ç­‰åˆ—ï¼Œåˆ™ä¸æ”¾è¿›
 	}
 
-	/*Êä³ö*/
-	cout << "\nDFA±í¸ñÊ½:" << endl;
+	/*è¾“å‡º*/
+	string s = "\n---DFAè¡¨æ ¼å¼:---\n";
 	for (auto& condition : totalCondition)
-		cout << condition << '\t';
+		s = s + condition + '\t';
 	i = 0;
 	for (auto& id_set : Dfa_Table)
 	{
 		if (i % col == 0)
-			cout << '\n';
+			s += '\n';
 
 		for (auto& id : id_set)
 		{
-			cout << id << ',';
+			s = s + to_string(id) + ',';
 		}
-		cout << '\t';
+		s += '\t';
 		
 		i++;
 	}
+	s += '\n';
+	return s;
 }
 
-void RegularExpression2NFA::GetMinDFA()
+string RegularExpression2NFA::GetMinDFA()
 {
-	/*ÖØĞÂÕûÀí*/
-	int currentId = 0;
-	map<vector<int>, int> m;
-	for (auto& v : Dfa_Table)
-	{
-		vector<vector<int>>::iterator it = find(Dfa_Table.begin(), v, v);
-		if (it == v.begin())
-		{
-			MinDfa_Table.push_back(currentId);
-			m[v] = currentId;
-			currentId++;
-		}
-		else
-		{
-			MinDfa_Table.push_back(m.find(it));
-		}
-			
+	// é‡æ–°æ•´ç†
+	int currentId = 1;
+	int i;
+	int col = totalCondition.size();
 
+	vector<vector<int>>::iterator it, it_find;
+	map<vector<int>, int> m;
+	map<int, int> map_setId;
+	vector<int> temp;
+
+
+	// åˆæ­¥åˆ’åˆ†éç»ˆæ€idSet[] = 0 å’Œ ç»ˆæ€idSet[] = 1
+	int endId = Nfa_Graph.end->id;
+
+	int tag  = 0;	// åˆ¤æ–­éç»ˆæ€
+
+	for (it = Dfa_Table.begin(); it != Dfa_Table.end(); it++)		// éå†DFAè¡¨é‡Œçš„æ¯ä¸ªé›†åˆ
+	{
+		if (find((*it).begin(), (*it).end(), endId) != (*it).end())	// è‹¥è¯¥é›†åˆåŒ…å«NFA	çš„ç»ˆç‚¹èŠ‚ç‚¹
+		{
+			tag = 1;	// åˆ™ä¸ºç»ˆæ€
+		}
+
+		if ((*it).size() != 0)
+		{
+			// ä¸ºæ¯ä¸ªé›†åˆé‡å‘½åid
+			it_find = find(Dfa_Table.begin(), it, *it);
+			if (it_find == it)	// æœªå‘½å
+			{
+				simpleDfa_Table.push_back(currentId);
+				m[*it] = currentId;
+				currentId++;
+
+				// åˆ’åˆ†å­é›†ï¼ˆéç»ˆæ€é›†0ï¼Œå’Œï¼Œç»ˆæ€é›†1ï¼‰
+				map_setId[m[*it]] = tag;
+			}
+			else				// å·²å‘½å
+			{
+				simpleDfa_Table.push_back(m[*it]);
+			}	
+		}
+		else // ç©ºé›†ç”¨0è¡¨ç¤º
+		{
+			simpleDfa_Table.push_back(0);
+		}
+	}
+	vector<string> idSet;
+	string s = "";
+	i = 0;
+	for (auto& t : simpleDfa_Table)
+	{
+		
+		
+		s += map_setId[t] + '0';
+		i++;
+		if (i % col == 0 && i != 0)
+		{
+			idSet.push_back(s);
+			s = "";
+		}
+		
 	}
 
-	/*Ò»ÁĞÒ»ÁĞµØ»®·Ö×Ó¼¯*/
+	// åˆå§‹åŒ–æœ€å°dfa
+	temp.clear();
+	for (auto& id : simpleDfa_Table)
+		minDfa_Table.push_back(temp);
 
-	/*²éÕÒ*/
+	// åˆå¹¶
+	int row = simpleDfa_Table.size() / col;
+	tag = 0;
+	for (i = 0; i < row; i++)
+	{
+		tag = 0;
+		for (int j = 0; j < i; j++)
+		{
+			if (idSet[i] == idSet[j])
+			{
+				tag = 1;
+				Combine(j, i);
+				break;
+			}
+		}
+		if (tag == 0)
+		{
+			Combine(i, i);
+		}
+	}
+	
+	cout << "\nåŒ–ç®€åçš„DFAè¡¨æ ¼å¼:" << endl;
+	for (auto& condition : totalCondition)
+		cout << condition << '\t';
+	i = 0;
+	for (auto& id : simpleDfa_Table)
+	{
+		if (i % col == 0)
+		{
+			cout << '\n';
+		}
+		i++;
+		cout << id << '\t';
+	}
+
+
+	/*è¾“å‡º*/
+	s =  "\n---æœ€å°DFAè¡¨æ ¼å¼:---\n";
+	for (auto& condition : totalCondition)
+		s = s + condition + '\t';
+	i = 0;
+	for (auto& set : minDfa_Table)
+	{
+		if (i % col == 0)
+		{
+			s += '\n';
+		}
+		i++;
+		for (auto& id : set)
+			s = s + to_string(id) + ',';
+		s += '\t';
+	}
+	s += '\n';
+	return s;
+}
+
+void RegularExpression2NFA::Combine(int srcRow, int destRow)
+{
+	int col = totalCondition.size();
+	for (int i = 0; i < col; i++)
+	{
+		minDfa_Table[srcRow * col + i].push_back(simpleDfa_Table[destRow * col + i]);
+	}
 }

@@ -5,10 +5,15 @@
 
 int main()
 {
+    
+    string s;
+    cout << "请输入正则表达式:";
+    cin >> s;
     RegularExpression2NFA re;
-    //re.GetNFA("a*");
-    re.GetNFA("a(a|b)");
-    re.GetDFA();
+    cout << re.GetNFA(s);
+    cout << re.GetDFA();
+    cout << re.GetMinDFA();
+    system("pause");
     return 0;
 }
 
@@ -17,10 +22,9 @@ int main()
 a
 abc
 a*
-a+
+a?
 a|b
 
 a(a|b)
-a*(a|b)+
-a(a*|(a|c))
+a?(ac|b)*
 */

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <cstring>
 #include <vector>
 #include <map>
@@ -7,25 +7,27 @@
 #include <stack>
 #include <queue>
 #include <set>
+#include <string>
+#include <iostream>
 using namespace std;
 
-// ±í¸ñ
+// è¡¨æ ¼
 struct Table
 {
 	int row, col;
 	char* content;
 };
 
-// Í¼½áµã
+// å›¾ç»“ç‚¹
 struct NfaNode {
 	int id;
-	vector<NfaNode*> nextNode;		// ÏÂÒ»½áµã
-	map<NfaNode*, char> transition; // ÏÂÒ»½áµã Óë ×ªÒÆÌõ¼ş
+	vector<NfaNode*> nextNode;		// ä¸‹ä¸€ç»“ç‚¹
+	map<NfaNode*, char> transition; // ä¸‹ä¸€ç»“ç‚¹ ä¸ è½¬ç§»æ¡ä»¶
 };
 
-// NFA¿é
+// NFAå—
 struct NfaChunk {
-	char op;		// ÈôÎª#£¬ËµÃ÷Õâ½öÊÇ½áµã¿é£»Èô²»Îª#£¬ËµÃ÷ÕâÊÇÔËËã·û£¬ºóÃæµÄ½áµãÔªËØÎŞÊµ¼Ê×÷ÓÃ
+	char op;		// è‹¥ä¸º#ï¼Œè¯´æ˜è¿™ä»…æ˜¯ç»“ç‚¹å—ï¼›è‹¥ä¸ä¸º#ï¼Œè¯´æ˜è¿™æ˜¯è¿ç®—ç¬¦ï¼Œåé¢çš„ç»“ç‚¹å…ƒç´ æ— å®é™…ä½œç”¨
 	NfaNode* start;
 	NfaNode* end;
 
@@ -40,15 +42,16 @@ class RegularExpression2NFA
 {
 	NfaChunk Nfa_Graph;
 	int maxId;
-	vector<char> totalCondition;	// ´æ´¢ËùÓĞ×ªÒÆÌõ¼ş
-	vector<vector<int>> Nfa_Table;	// NFA±í
-	bool** mark;					// ¶şÎ¬Êı×é£¬ÓÃÓÚÔÚ±éÀúµÄÊ±ºò±ê¼ÇÒÑÂ·¹ıµÄ½áµã
-	vector<vector<int>> Dfa_Table;	// DFA±í
-	vector<int> MinDfa_Table;	// ×îĞ¡»¯DFA±í
+	vector<char> totalCondition;	// å­˜å‚¨æ‰€æœ‰è½¬ç§»æ¡ä»¶
+	vector<vector<int>> Nfa_Table;	// NFAè¡¨
+	bool** mark;					// äºŒç»´æ•°ç»„ï¼Œç”¨äºåœ¨éå†çš„æ—¶å€™æ ‡è®°å·²è·¯è¿‡çš„ç»“ç‚¹
+	vector<vector<int>> Dfa_Table;	// DFAè¡¨
+	vector<int> simpleDfa_Table;	// åŒ–ç®€åçš„DFAè¡¨
+	vector<vector<int>> minDfa_Table;		// æœ€å°åŒ–çš„DFAè¡¨
 
 public:
 
-	void GetNFA(string regularExpression);
+	string GetNFA(string regularExpression);
 
 	NfaChunk And(char c);
 	NfaChunk Or(NfaChunk a, NfaChunk b);
@@ -60,12 +63,13 @@ public:
 
 	void PrintNfaGraph();
 	void DFSPrint(NfaNode* root);
-	void PrintNfaTable();
+	string PrintNfaTable();
 	void DFSPrint_table(NfaNode* root);
 
-	void GetDFA();
+	string GetDFA();
 
-	void GetMinDFA();
+	string GetMinDFA();
+	void Combine(int srcRow, int destRow);
 
 
 };
