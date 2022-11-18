@@ -19,12 +19,14 @@ SOURCES += \
     Loader.cpp \
     grammar_processor.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    regularExpression_processor.cpp
 
 HEADERS += \
     Loader.h \
     grammar_processor.h \
-    mainwindow.h
+    mainwindow.h \
+    regularExpression_processor.h
 
 FORMS += \
     mainwindow.ui
