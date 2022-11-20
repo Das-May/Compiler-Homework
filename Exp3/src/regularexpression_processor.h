@@ -13,30 +13,19 @@
 #include <iostream>
 using namespace std;
 
-// 表格
-struct Table
+class RegularExpressionProcessor
 {
-    int row, col;
-    char* content;
-};
+    vector<vector<char>> NFA;
+    vector<vector<char>> DFA;
+    vector<vector<char>> minDFA;
 
-// 图结点
-struct NfaNode {
-    char id;
-    vector<char> nextNode;		// 下一结点
-    vector<string> transition; // 下一结点 与 转移条件
-};
-
-static class RegularExpressionProcessor
-{
-    static vector<NfaNode> Nfa_Graph;
-
-    static string PrintNfaGraph();
+    static string PrintFATable(int row, int col, vector<vector<int>>& FA);
 
 public:
-    static string GetNFA(string regularExpression);
-    static string GetDFA();
-    static string GetMinDFA();
+    void SetNFA(vector<vector<char>> nfa);
+    string GetNFA();
+    string GetDFA();
+    string GetMinDFA();
 
 };
 

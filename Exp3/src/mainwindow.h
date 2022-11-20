@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include "grammar_processor.h"
+#include <regularExpression_processor.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -22,5 +23,6 @@ public:
 private:
     Ui::MainWindow *ui;
     GrammarProcessor* gm;
+    RegularExpressionProcessor *re;
 };
 #endif // MAINWINDOW_H

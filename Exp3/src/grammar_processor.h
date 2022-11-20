@@ -1,7 +1,6 @@
 #ifndef GRAMMARPROCESSOR_H
 #define GRAMMARPROCESSOR_H
 
-#include <regularExpression_processor.h>
 #include <vector>
 #include <map>
 #include <list>
@@ -23,20 +22,23 @@ struct Rule{
 class GrammarProcessor
 {
 private:
-    map<int, char> v;
-    list<Rule> grammar;
-    list<int> vn;
-    int n_num = 0, t_num = 101;
+    map<int, char> v;// 字典映射表
+    list<Rule> grammar;// 文法规则
+    list<int> vn;//非终结符集合
+    int n_num = 0, t_num = 100;
     char n_char = 0;
     int temp_set[200];
     list<int> first;
+    vector<vector<char>> NFA;
 
     void AddVn(char c);
     void AddVt(char c);
     string PrintRule(Rule r);
     int value2key(char c);
-    bool MatchFormat(Rule r, bool alpha, bool B, bool beta, bool BsameA);
+    bool isVn(int num);
+    bool isVt(int num);
     bool find(vector<int>::iterator a, vector<int>::iterator b, int value);
+    void OrganizeDict();
 
     void RemoveHarmfulRules();
     void RemoveUnreachableRules();
@@ -57,7 +59,6 @@ public:
 
     string SimplifyGrammar();
 
-
     string GetFirst();
 
     string GetFollow();
@@ -66,6 +67,8 @@ public:
     string RemoveLeftRecursion();
 
     string GetRegularExpression();
+
+    vector<vector<char>> GetNFA();
 
     string PrintGrammar();
 };

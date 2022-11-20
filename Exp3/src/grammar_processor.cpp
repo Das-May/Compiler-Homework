@@ -59,7 +59,7 @@ void GrammarProcessor::RemoveUnreachableRules()
         {
             for(auto& r : g.right)
             {
-                if(r < 100) // 非终结符号
+                if(isVn(r)) // 非终结符号
                 {
                     temp_set[r] = 1;    // 将右部的每个非终结符也放入“可到达集合”中
                 }
@@ -99,7 +99,7 @@ bool GrammarProcessor::RemoveUnterminableRules_sub(int vn, int depth)
             tag = true;
             for(auto& r : g.right)
             {
-                if(r <= 100)
+                if(isVn(r))
                 {
                     if(r == vn)// 满足A->αAβ形式
                     {
@@ -185,7 +185,7 @@ void GrammarProcessor::GetFirst_sub(int x)
         {
             tag = true;
             int a = g.right[0]; // 取文法右部第一个字符假设为a
-            if(a >100 )     // 若a是终结符或ε
+            if( isVt(a) )     // 若a是终结符或ε
             {
                 bool repeat = false;
                 for(list<int>::iterator it = first.begin(); it != first.end(); it++)
@@ -215,7 +215,7 @@ void GrammarProcessor::GetFirst_sub(int x)
 list<int>& GrammarProcessor::GetFirst(int x)
 {
     first.clear();
-    if(x < 100)
+    if(isVn(x))
         GetFirst_sub(x);
     else
         first.push_back(x);
@@ -225,6 +225,7 @@ list<int>& GrammarProcessor::GetFirst(int x)
 string GrammarProcessor::GetFirst()
 {
     string allFirst = "";
+    vector<int> temp_vector;
     for(int i = 0; i < n_num; i++)
     {
         if(v[i] != 0)
@@ -232,7 +233,13 @@ string GrammarProcessor::GetFirst()
             allFirst += "First(";
             allFirst += v[i];
             allFirst += ")={" ;
+            temp_vector.clear();
             for(auto& element : GetFirst(i))
+            {
+                if(find(temp_vector.begin(), temp_vector.end(), element) == false)
+                    temp_vector.push_back(element);
+            }
+            for(auto& element : temp_vector)
             {
                 allFirst += v[element];
                 allFirst += ", ";
@@ -250,14 +257,14 @@ list<int> GrammarProcessor::GetFollow(int x)
     list<int> follow;
     if(x == 0) // ①当x是文法的开始符号
     {
-        follow.push_back(102); // 加入$
+        follow.push_back(value2key('$')); // 加入$
     }
 
     for(auto& g : grammar) // 遍历每个文法
     {
         if(x == g.right[ g.right.size() - 1 ])   // ②当x是最右部的时候
         {
-            follow.push_back(102); // 加入$
+            follow.push_back(value2key('$')); // 加入$
 
             // ④如果存在一个产生式A→αB，那么follow（B）包含follow（A），注意A≠B
             if(g.left != x)
@@ -281,7 +288,7 @@ list<int> GrammarProcessor::GetFollow(int x)
                 list<int> kkk = GetFirst(r);
                 for(auto& f : kkk)
                 {
-                    if(f != 100)    // 那么follow（B）包含first（β）-ε
+                    if(f != value2key('#'))    // 那么follow（B）包含first（β）-ε
                     {
                         follow.push_back(f);
                     }
@@ -303,6 +310,7 @@ list<int> GrammarProcessor::GetFollow(int x)
 string GrammarProcessor::GetFollow()
 {
     string allFollow = "";
+    vector<int> temp_vector;
     for(int i = 0; i < n_num; i++)
     {
         if(v[i] != 0)
@@ -310,7 +318,13 @@ string GrammarProcessor::GetFollow()
             allFollow += "First(";
             allFollow += v[i];
             allFollow += ")={" ;
+            temp_vector.clear();
             for(auto& element : GetFollow(i))
+            {
+                if(find(temp_vector.begin(), temp_vector.end(), element) == false)
+                    temp_vector.push_back(element);
+            }
+            for(auto& element : temp_vector)
             {
                 allFollow += v[element];
                 allFollow += ", ";
@@ -383,7 +397,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
                             // 新增文法C->B
                             temp_rule.left = temp_set[k];
                             if((*it2)->right.size() == 0)
-                                temp_rule.right.push_back(101); // epslion（ε）
+                                temp_rule.right.push_back(value2key('#')); // epslion（ε）
                             else
                                 temp_rule.right = (*it2)->right;
                             grammar.push_back(temp_rule);
@@ -398,7 +412,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
                             // 将文法A->aB修改为文法C->B
                             (*it2)->right.erase((*it2)->right.begin());//移除a
                             if((*it2)->right.size() == 0)
-                                (*it2)->right.push_back(101);//epslion
+                                (*it2)->right.push_back(value2key('#'));//epslion
                             (*it2)->left = temp_set[temp_set[k]];// 把C改成A
                         }
                     }
@@ -462,7 +476,7 @@ string GrammarProcessor::RemoveLeftRecursion()
                     // 新增文法B->ε
                     Rule temp_rule;
                     temp_rule.left = n_num - 1;
-                    temp_rule.right.push_back(101);
+                    temp_rule.right.push_back(value2key('#'));
                     grammar.push_back(temp_rule);
                     break;
                 }
@@ -570,45 +584,18 @@ int GrammarProcessor::value2key(char c)
     return -1;
 }
 
-// 判断文法r是否满足格式A->[α][B|A][β]
-bool GrammarProcessor::MatchFormat(Rule r, bool alpha, bool B, bool beta, bool BsameA)
+bool GrammarProcessor::isVn(int num)
 {
-    bool tag = true;
+    return (num < 100 && num >= 0);
+}
 
-    for(auto&v : r.right)
-    {
-        if(alpha && v > 100)  // alpha
-        {
-
-        }
-        else if(B && v <= 100)       // B
-        {
-            alpha = false;
-            if(BsameA && r.left == v)   // BsameA
-            {
-                B = false;
-            }
-            else
-            {
-                tag = false;
-                break;
-            }
-        }
-        else if(beta && v > 100) // beta
-        {
-            B = false;
-        }
-        else
-        {
-            tag = false;
-            break;
-        }
-    }
-    return tag;
+bool GrammarProcessor::isVt(int num)
+{
+    return (num >= 100);
 }
 
 // qt找不到find函数，我也不知道为什么，所以我重写了
-bool find(vector<int>::iterator a, vector<int>::iterator b, int value)
+bool GrammarProcessor::find(vector<int>::iterator a, vector<int>::iterator b, int value)
 {
     vector<int>::iterator it = a;
     for( ; it != b; it++)
@@ -617,4 +604,44 @@ bool find(vector<int>::iterator a, vector<int>::iterator b, int value)
     return false;
 }
 
+// 整理字典
+void GrammarProcessor::OrganizeDict()
+{
+    memset(temp_set, 0, sizeof(temp_set));
+    for(auto & g : grammar)
+    {
+        temp_set[g.left] = 1;
+        for(auto & r : g.right)
+        {
+            temp_set[r] = 1;
+        }
+    }
 
+    int i, j;
+    j = 0;
+    map<int, char> temp_v;
+    for(i = 0; i < n_num; i++)
+    {
+        if(temp_set[i] == 1)
+        {
+            temp_v[j] = v[i];
+            j++;
+        }
+    }
+    n_num = j;
+
+    temp_v[100] = '$';
+    temp_v[101] = '#';
+    j = 103;
+    for(i = 103; i < t_num; i++)
+    {
+        if(temp_set[i] == 1)
+        {
+            temp_v[j] = v[i];
+            j++;
+        }
+    }
+    t_num = j;
+
+    v = temp_v;
+}
