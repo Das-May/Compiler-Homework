@@ -122,7 +122,7 @@ bool GrammarProcessor::RemoveUnterminableRules_sub(int vn, int depth)
             break;
         }
     }
-    temp_set[vn] = endable;
+    temp_set[vn] = endable && tag;
     return endable;
 }
 
@@ -504,6 +504,7 @@ string GrammarProcessor::RemoveLeftRecursion()
     return PrintGrammar();
 }
 
+#pragma region "获取NFA"{
 // 左线性转NFA
 bool GrammarProcessor::LL2NFA()
 {
@@ -518,9 +519,93 @@ bool GrammarProcessor::LL2NFA()
 // 右线性转NFA
 bool GrammarProcessor::RL2NFA()
 {
-    bool isRL = true;
-    return isRL;
+    //遍历每条文法，检测是否满足右线性
+    for(auto & g :grammar)
+    {
+        int size = g.right.size();
+        vector<int>::iterator it = g.right.begin();
+        if(size == 1)//A->a
+        {
+            if(! isVt(g.right[0]))
+                return false;
+        }
+        else if(size == 2)//A->aB
+        {
+            size--;
+            for(int i = 0; i < size; i++, it++ )//右部前面的都是终结符号
+            {
+                if(! isVt((*it)))
+                    return false;
+            }
+            if( !isVn( g.right[size] ) ) //右部最右的符号是非终结符号
+                return false;
+        }
+        else {
+            return false;
+        }
+    }
+
+    // 满足
+    AddVn('Z');//新增非终结符Z作为终态结点
+    int row = n_num + 1;
+    int col = t_num - 100;
+    vector<char> temp;
+
+    temp.push_back(row);//第一格存储行列
+    temp.push_back(col);
+    NFA.push_back(temp);
+    temp.clear();
+
+    for(int i = 1; i < row * col; i++)//初始化NFA表格
+    {
+        if(i < col)
+        {
+            temp.push_back(v[i + 100]);//为表行头添加对应的终结符（转移条件）
+        }
+        else if(i % col == 0)
+        {
+            temp.push_back(v[(i / col) - 1]);//为表列头添加对应的非终结符（结点）
+        }
+        NFA.push_back(temp);
+        temp.clear();
+    }
+
+    int rowcount, colcount;
+    for(auto & g :grammar)//填写NFA表格
+    {
+        int size = g.right.size();
+        rowcount = g.left + 1;
+        colcount = g.right[0] - 100;
+        if(size == 1)//A->a
+        {
+
+            NFA[col * rowcount + colcount].push_back('Z');
+        }
+        else//A->aB
+        {
+            /*size--;
+            int l = g.left;
+            for(int i = 0; i < size; i++)//右部前面的都是终结符号*/
+            NFA[col * rowcount + colcount].push_back(v[g.right[1]]);
+        }
+    }
+
+    return true;
 }
+
+vector<vector<char>> GrammarProcessor::GetNFA()
+{
+    NFA.clear();
+    OrganizeDict();
+    RL2NFA();/*
+    if(! LL2NFA())
+    {
+
+    }*/
+    return NFA;
+}
+
+#pragma endregion }
 
 // 打印单条文法
 string GrammarProcessor::PrintRule(Rule r)
@@ -632,8 +717,8 @@ void GrammarProcessor::OrganizeDict()
 
     temp_v[100] = '$';
     temp_v[101] = '#';
-    j = 103;
-    for(i = 103; i < t_num; i++)
+    j = 102;
+    for(i = 102; i < t_num; i++)
     {
         if(temp_set[i] == 1)
         {

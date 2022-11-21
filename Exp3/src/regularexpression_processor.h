@@ -19,7 +19,9 @@ class RegularExpressionProcessor
     vector<vector<char>> DFA;
     vector<vector<char>> minDFA;
 
-    static string PrintFATable(int row, int col, vector<vector<int>>& FA);
+    string PrintFATable(vector<vector<char>>::iterator it);
+
+    bool find(vector<char>::iterator begin, vector<char>::iterator end, char value);
 
 public:
     void SetNFA(vector<vector<char>> nfa);

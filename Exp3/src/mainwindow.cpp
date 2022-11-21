@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("文法问题处理器");
 
-    QString fileName = "D://Homework//Compiler-Homework//build-Qt_Compiler3-Desktop_Qt_5_12_9_MinGW_32_bit-Debug//data.txt";
+    QString fileName = "D://Homework//Compiler-Homework//build-Qt_Compiler3-Desktop_Qt_5_12_9_MinGW_32_bit-Debug//data1.txt";
     ui->lineEdit->setText(fileName);
 
     // 读入文法
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 获取Follow集
     temp = gm->GetFollow();
     ui->Follow_Lable->setText(QString::fromStdString(temp));
-/*
+
     re = new RegularExpressionProcessor();
     re->SetNFA(gm->GetNFA());
 
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 获取最小DFA
     temp = re->GetMinDFA();
     ui->minDFA_Lable->setText(QString::fromStdString(temp));
-*/
+
     /*
     connect(ui->btn,&QPushButton::clicked,[=](){
         QString fileName = QFileDialog::getOpenFileName(this,QStringLiteral("选取代码文件"),"D:",QStringLiteral("(*txt)"));
