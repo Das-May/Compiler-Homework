@@ -12,14 +12,13 @@ Tiny::Tiny()
     keyword["repeat"] = REPEAT;
     keyword["read"] = READ;
     keyword["write"] = WRITE;
-    keyword["end"] = ENDINPUT;
 
 }
 
 #pragma region "对外接口"{
 void Tiny::execute(char *c)
 {
-    buffer = 0;
+    buffer = c;
     pos = 0;
     string output = "";
     string syntaxTree = "";
@@ -45,13 +44,16 @@ string Tiny::GetsyntaxTree()
 #pragma region "框架函数"{
 void Tiny::GetToken()
 {
-    while (buffer[pos]==32||buffer[pos]==9)  // 遇到 空格或换行符
-           pos++; // 持续向前扫描
-    if (buffer[pos] == '{')// 遇到 注释
+    while (buffer[pos]==' ' || buffer[pos]=='\t' || buffer[pos]=='\n' || buffer[pos]=='{')  // 遇到 空格或制表符或换行符
     {
-        while(buffer[pos]!='}')
-            pos++;// 持续向前扫描
-        pos++;//直到扫过注释结束符
+        if (buffer[pos] == '{')// 遇到 注释
+        {
+            while(buffer[pos]!='}')
+               pos++;// 持续向前扫描
+            pos++;//直到扫过注释结束符
+        }
+        else
+            pos++; // 持续向前扫描
     }
 
     if((buffer[pos]>='0' )&& (buffer[pos]<='9'))  // 遇到 数字
@@ -116,6 +118,10 @@ void Tiny::GetToken()
                 token.ID=RBRACKET;
                 token.word=buffer[pos];
                 break;
+            case ';':
+                token.ID=SEMICOLON;
+                token.word=buffer[pos];
+                break;
             default:
                 cout<<" Error Input at: "<<pos+1;
                 exit(1);
@@ -138,12 +144,14 @@ void Tiny::preorder(BTreeNode* t, int deepth)
 
     for(int i = 0; i < deepth; i++)
         syntaxTree += '\t';
+
     if (t->data.ID == NUMBER)
     {
         syntaxTree = syntaxTree + to_string(t->data.num) + '\n' ;
     }
     else
         syntaxTree = syntaxTree + t->data.word  + '\n' ;
+    //syntaxTree = syntaxTree + string(t->data.ID) + '\n' ;
 
     preorder(t->lc, deepth+1);
     preorder(t->rc, deepth+1);
@@ -157,22 +165,20 @@ void Tiny::error()
 
 #pragma endregion }
 
-#pragma region "文法规则"{
+#pragma region "基础架构"{
 BTreeNode* Tiny::program()
 {
-    BTreeNode* root = new BTreeNode;
-    root->data.word = "BEGIN_PROGRAM";
-    root->rc = 0;
-    root->lc = stmt_sequence();
+    BTreeNode* root = stmt_sequence();
     return root;
 }
+
 BTreeNode* Tiny::stmt_sequence()
 {
     BTreeNode* nodex, * nodey;
 
     nodex = statement();
 
-    while (token.ID == IDENTIFIER && token.word == ";")
+    while (token.ID == SEMICOLON)
     {
         nodey = new BTreeNode;   // 生成结点
         nodey->data = token;
@@ -195,6 +201,11 @@ BTreeNode* Tiny::statement()
         break;
     case WRITE:
         node = write_stmt();
+        break;
+    case END:
+        node = new BTreeNode;
+        node->data = token;
+        node->lc = node->rc = 0;
         break;
     default:
         error();
@@ -228,3 +239,37 @@ BTreeNode* Tiny::exp()
     return 0;
 }
 #pragma endregion }
+
+#pragma region "算数表达式"{
+
+BTreeNode* Tiny::arithmetic_exp()
+{
+    //if(token.ID == )
+}
+
+BTreeNode* Tiny::term()
+{
+
+}
+BTreeNode* Tiny::factor()
+{
+
+}
+BTreeNode* Tiny::comop()
+{
+
+}
+BTreeNode* Tiny::addop()
+{
+
+}
+BTreeNode* Tiny::mulop()
+{
+
+}
+
+#pragma endregion }
+
+
+
+

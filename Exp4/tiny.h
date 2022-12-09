@@ -9,8 +9,8 @@ using namespace std;
 // 单词种类的枚举
 enum TokenID {
     IDENTIFIER, NUMBER,
-    ADD,SUB,MUL,DIV,LBRACKET,RBRACKET,
-    IF, THEN, ELSE, END, REPEAT, READ, WRITE,ENDINPUT,
+    ADD,SUB,MUL,DIV,SUB_EQUAL, LBRACKET,RBRACKET,
+    SEMICOLON, IF, THEN, ELSE, END, REPEAT, READ, WRITE,
     BEGIN_PROGRAM, END_PROGRAM, ERROR
 };
 // 单词结构
@@ -57,6 +57,14 @@ private:
 
     // 测试用例2 测这部分
     BTreeNode* exp();
+    BTreeNode* arithmetic_exp();
+    BTreeNode* term();
+    BTreeNode* factor();
+    BTreeNode* comop();
+    BTreeNode* addop();
+    BTreeNode* mulop();
+
+    // 测试用例3 测这部分
 
 
 };
