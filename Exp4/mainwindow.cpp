@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("TINY语言扩充");
 
     // 读入源代码
-    QString fn = "D://Homework//Compiler-Homework//build-Qt_Compiler4-Desktop_Qt_5_12_9_MinGW_32_bit-Debug//testcase1.txt";
+    QString fn = "D://Homework//Compiler-Homework//build-Qt_Compiler4-Desktop_Qt_5_12_9_MinGW_32_bit-Debug//testcase2.txt";
     QByteArray fn_qba = fn.toLatin1();
     char* fn_cc = fn_qba.data();
     char* c = Loader::Input(fn_cc);

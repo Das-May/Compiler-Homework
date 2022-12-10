@@ -9,8 +9,11 @@ using namespace std;
 // 单词种类的枚举
 enum TokenID {
     IDENTIFIER, NUMBER,
-    ADD,SUB,MUL,DIV,SUB_EQUAL, LBRACKET,RBRACKET,
-    SEMICOLON, IF, THEN, ELSE, END, REPEAT, READ, WRITE,
+    ASSIGN, ADD,SUB,MUL,DIV,SUB_ASSIGN, REMAIN, POWER, LBRACKET,RBRACKET,//算数运算
+    EQUAL, MORE, MORE_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL,//比较
+    AND, OR, NOT,//逻辑运算
+    REGULAR_ASSIGN, REGULAR_OR, REGULAR_CONNECT, REGULAR_CLOSURE,//正则运算
+    SEMICOLON, IF, THEN, ELSE, END, REPEAT, READ, WRITE,//关键字
     BEGIN_PROGRAM, END_PROGRAM, ERROR
 };
 // 单词结构
@@ -25,7 +28,14 @@ struct BTreeNode
 {
     TokenStru data;
     BTreeNode* lc, * rc;
+    BTreeNode(TokenStru d)// 构造函数
+    {
+        data = d;
+        lc = rc = 0;
+    }
+    BTreeNode(){}
 };
+
 
 class Tiny
 {
@@ -52,8 +62,11 @@ private:
     BTreeNode* program();
     BTreeNode* stmt_sequence();
     BTreeNode* statement();
+
+    //
     BTreeNode* read_stmt();
     BTreeNode* write_stmt();
+    BTreeNode* assign_stmt();
 
     // 测试用例2 测这部分
     BTreeNode* exp();
@@ -65,7 +78,13 @@ private:
     BTreeNode* mulop();
 
     // 测试用例3 测这部分
+    BTreeNode* bool_exp();
+    BTreeNode* bterm();
+    BTreeNode* bfactor();
 
+    //
+    BTreeNode* if_stmt();
+    BTreeNode* repeat_stmt();
 
 };
 
