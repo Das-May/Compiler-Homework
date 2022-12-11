@@ -13,7 +13,7 @@ enum TokenID {
     EQUAL, MORE, MORE_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL,//比较
     AND, OR, NOT,//逻辑运算
     REGULAR_ASSIGN, REGULAR_OR, REGULAR_CONNECT, REGULAR_CLOSURE,//正则运算
-    SEMICOLON, IF, THEN, ELSE, END, REPEAT, READ, WRITE,//关键字
+    SEMICOLON, IF, THEN, ELSE, END, REPEAT, UNTIL, READ, WRITE,//关键字
     BEGIN_PROGRAM, END_PROGRAM, ERROR
 };
 // 单词结构
@@ -84,7 +84,13 @@ private:
 
     //
     BTreeNode* if_stmt();
+
+    //
     BTreeNode* repeat_stmt();
+
+    //
+    BTreeNode* regular_exp();
+    BTreeNode* regular_term();
 
 };
 

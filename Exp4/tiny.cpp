@@ -10,8 +10,13 @@ Tiny::Tiny()
     keyword["else"] = ELSE;
     keyword["end"] = END;
     keyword["repeat"] = REPEAT;
+    keyword["until"] = UNTIL;
     keyword["read"] = READ;
     keyword["write"] = WRITE;
+
+    keyword["or"] = OR;
+    keyword["and"] = AND;
+    keyword["not"] = NOT;
 
 }
 
@@ -68,10 +73,10 @@ void Tiny::GetToken()
         token.num = temp_num;
     }
 
-    else if((buffer[pos]>='a' )&& (buffer[pos]<='z'))// 遇到 字母
+    else if((buffer[pos]>='a' ) && (buffer[pos]<='z'))// 遇到 字母
     {
         string temp_word = "";
-        while((buffer[pos]>='a' )&& (buffer[pos]<='z'))
+        while((buffer[pos]>='a' ) && (buffer[pos]<='z'))
         {
             temp_word += buffer[pos];
             pos++;
@@ -155,6 +160,27 @@ void Tiny::GetToken()
             }
             else
                 token.ID = LESS;
+            break;
+        #pragma endregion }
+
+        #pragma region "正则"{
+        case ':':
+            if(buffer[pos + 1] == '='){
+                token.ID = REGULAR_ASSIGN;
+                token.word = ":=";
+                pos++;
+            }
+            else
+                error();
+            break;
+        case '|':
+            token.ID = REGULAR_OR;
+            break;
+        case '&':
+            token.ID = REGULAR_CONNECT;
+            break;
+        case '#':
+            token.ID = REGULAR_CLOSURE;
             break;
         #pragma endregion }
 
@@ -294,7 +320,7 @@ BTreeNode* Tiny::write_stmt()
 
 BTreeNode* Tiny::exp()
 {
-    return arithmetic_exp();
+    return bool_exp();
 }
 
 BTreeNode* Tiny::assign_stmt()
@@ -303,16 +329,23 @@ BTreeNode* Tiny::assign_stmt()
     nodey = new BTreeNode(token);
     match(IDENTIFIER);
 
-    if(token.ID == ASSIGN || token.ID == SUB_ASSIGN ||  token.ID == REGULAR_ASSIGN)
-    {
+    switch (token.ID) {
+    case ASSIGN:
+    case SUB_ASSIGN:
         nodex = new BTreeNode(token);
         nodex->lc = nodey;
         match(token.ID);
 
         nodex->rc = exp();
-    }
-    else
-    {
+        break;
+    case REGULAR_ASSIGN:
+        nodex = new BTreeNode(token);
+        nodex->lc = nodey;
+        match(token.ID);
+
+        nodex->rc = regular_exp();
+        break;
+    default:
         error();
     }
     return nodex;
@@ -392,15 +425,173 @@ BTreeNode* Tiny::factor()
 
 #pragma endregion }
 
+#pragma region "逻辑表达式"{
+BTreeNode* Tiny::bool_exp()
+{
+    BTreeNode* nodex = 0, *nodey = 0;
+    nodex = bterm();
+
+    while (token.ID == OR)
+    {
+        nodey = new BTreeNode;   // 新的父节点
+        nodey->data = token;
+        nodey->lc = nodex;
+        /*switch (token.ID)
+        {
+        case MUL:
+            break;
+        }*/
+        match(token.ID);
+
+        // factor
+        nodey->rc = bterm();
+        nodex = nodey;
+    }
+
+    return nodex;
+}
+
+BTreeNode* Tiny::bterm()
+{
+    BTreeNode* nodex = 0, *nodey = 0;
+    nodex = bfactor();
+
+    while (token.ID == AND)
+    {
+        nodey = new BTreeNode;   // 新的父节点
+        nodey->data = token;
+        nodey->lc = nodex;
+        /*switch (token.ID)
+        {
+        case MUL:
+            break;
+        }*/
+        match(token.ID);
+
+        // factor
+        nodey->rc = bfactor();
+        nodex = nodey;
+    }
+
+    return nodex;
+}
+BTreeNode* Tiny::bfactor()
+{
+    BTreeNode* nodex = arithmetic_exp();
+    switch (token.ID) {
+    case LESS:
+    case LESS_OR_EQUAL:
+    case EQUAL:
+    case MORE:
+    case MORE_OR_EQUAL:
+    case NOT_EQUAL:
+        BTreeNode* nodey = new BTreeNode(token);
+        match(token.ID);
+        nodey->lc = nodex;
+        nodey->rc = arithmetic_exp();
+        nodex = nodey;
+    }
+    return nodex;
+}
+#pragma endregion }
+
 BTreeNode* Tiny::if_stmt()
 {
+    BTreeNode* nodex = 0;
+    nodex = new BTreeNode(token);
+    match(IF);
 
+    nodex->lc = new BTreeNode(token);
+    match(LBRACKET);
+
+    nodex->lc->lc = exp();
+
+    nodex->lc->rc = new BTreeNode(token);
+    match(RBRACKET);
+
+    nodex->lc->rc->lc = new BTreeNode(token);
+    match(THEN);
+
+    nodex->lc->rc->lc->lc = stmt_sequence();
+
+    if(token.ID == ELSE)
+    {
+        nodex->lc->rc->rc = new BTreeNode(token);
+        match(ELSE);
+
+        nodex->lc->rc->rc->lc = stmt_sequence();
+    }
+
+    nodex->rc = new BTreeNode(token);
+    match(END);
+
+    return nodex;
 }
 
 BTreeNode* Tiny::repeat_stmt()
 {
+    BTreeNode* nodex = 0;
+    nodex = new BTreeNode(token);
+    match(REPEAT);
 
+    nodex->lc = stmt_sequence();
+
+    nodex->rc = new BTreeNode(token);
+    match(UNTIL);
+
+    nodex->rc->lc = exp();
+
+    return nodex;
 }
 
+#pragma region "正则表达式"{
 
+BTreeNode* Tiny::regular_exp()
+{
+    BTreeNode* nodex = 0, *nodey = 0;
+    nodex = regular_term();
+
+    while (token.ID == REGULAR_OR || token.ID == REGULAR_CONNECT)
+    {
+        nodey = new BTreeNode;   // 新的父节点
+        nodey->data = token;
+        nodey->lc = nodex;
+        /*switch (token.ID)
+        {
+        case MUL:
+            break;
+        }*/
+        match(token.ID);
+
+        nodey->rc = regular_term();
+        nodex = nodey;
+    }
+
+    return nodex;
+}
+
+BTreeNode* Tiny::regular_term()
+{
+    BTreeNode* nodex = 0;
+    if(token.ID == REGULAR_CLOSURE)
+    {
+        nodex = new BTreeNode(token);
+        match(token.ID);
+    }
+
+    if(token.ID == IDENTIFIER)
+    {
+        if(nodex != 0)
+            nodex->lc = new BTreeNode(token);
+        else
+            nodex = new BTreeNode(token);
+        match(IDENTIFIER);
+    }
+    else
+        error();
+
+    return nodex;
+}
+
+#pragma endregion }
 
