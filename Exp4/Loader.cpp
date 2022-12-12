@@ -62,6 +62,12 @@ void Loader::Output(const char* processed)
     file.close();
 }
 
+void Loader::SetFilepath(const char* filePath)
+{
+    Loader::filePath = new char[strlen(filePath) + 1];
+    strcpy(Loader::filePath, filePath);
+}
+
 char* Loader::GetFilepath()
 {
     return filePath;

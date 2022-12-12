@@ -25,8 +25,8 @@ void Tiny::execute(char *c)
 {
     buffer = c;
     pos = 0;
-    string output = "";
-    string syntaxTree = "";
+    output = "";
+    syntaxTree = "";
 
     GetToken();
 
@@ -199,14 +199,17 @@ void Tiny::GetToken()
             break;
 
         default:
-            cout<<" Error Input at: "<<pos+1;
-            exit(1);
+            error();
+            //exit(1);
         }
         pos++;
     }
 
     else
+    {
         token.ID = END_PROGRAM;
+        token.word = "EndProgram";
+    }
 }
 
 void Tiny::match(TokenID expecttokenid)

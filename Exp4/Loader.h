@@ -13,6 +13,7 @@ private:
 public:
     static char* Input(const char* filePath);
     static void Output(const char* compressed);
+    static void SetFilepath(const char* filePath);
     static char* GetFilepath();
 };
 
