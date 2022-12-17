@@ -1,0 +1,7 @@
+A->Aa
+A->Bbc
+A->c
+B->Aef
+B->gAh
+B->a
+C->c

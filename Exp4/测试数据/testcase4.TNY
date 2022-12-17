@@ -1,0 +1,4 @@
+{ test if-statment }
+if(1==2)
+then write x
+else read x

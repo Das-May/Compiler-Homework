@@ -1,0 +1,4 @@
+{ test repeat-statment }
+repeat write x
+until 1==1
+

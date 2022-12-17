@@ -1,0 +1,2 @@
+{ test regular-exp }
+x := #a | b&c

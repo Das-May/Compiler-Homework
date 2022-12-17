@@ -1,0 +1,11 @@
+S->Be
+B->Ce
+B->Af
+B->eb
+B->E
+A->E
+A->de
+E->e
+C->Cf
+G->G
+D->f
