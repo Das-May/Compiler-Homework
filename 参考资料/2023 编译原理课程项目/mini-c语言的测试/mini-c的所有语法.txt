@@ -1,0 +1,35 @@
+2.Mini C的语法
+
+Mini C 的BNF语法如下:
+1. program→ definition-list
+2. definition-list→ definition-list definition | definition
+3. definition→ variable-definition | function-definition
+4. variable-definition→ type-indicator ID ；|type-indicator ID[NUM]；
+5. type-indicator→ int | float | void
+6. function-definition→ type-indicator ID（parameters）compound-stmt
+7. parameters→parameter-list | void
+8. parameter-list→parameter-list, parameter | parameter
+9. parameter→ type-indicator ID | type-indicator ID[ ]
+10.compound-stmt→ { local-definitions statement-list }
+11.local-definitions→ local-definitions variable-definition |empty
+12.statement-list→ statement-list statement | empty
+13.statement→expression-stmt | compound-stmt | condition-stmt
+|dowhile-stmt | return-stmt
+14.expression-stmt→ expression ； | ；
+15.condition-stmt→ if(expression) statement 
+|if（expression）statement else statement
+16.dowhile-stmt→do statement while ( expression) ；
+17.return-stmt→return ；| return expression ；
+18.expression→ variable=expression | simple-expression
+19.variable→ID |ID[expression]
+20.simple-expression→additive-expression relop additive-expression
+|additive-expression
+21.relop→<=|<|>|>=|==|!=
+22 additive-expression→additive-expression addop term | term
+23.addop→+|-
+24.term→term mulop factor | factor
+25.mulop→*|/|%
+26 factor→(expression )| variable | call | NUM
+27.call→ID(arguments)
+28.arguments→argument-list | empty
+29.argument-list→argument-list,expression | expression
