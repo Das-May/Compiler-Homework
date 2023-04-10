@@ -1,0 +1,18 @@
+KEYWORD
+if|then|else|end|repeat|until|read|write|IF|THEN|ELSE|END|REPEAT|UNTIL|READ|WRITE
+
+OPERATOR
++|–|*|/|<|=|;|:=
+
+IDENTIFER
+letter letter*
+
+NUMBER
+digit digit*
+
+SPACE
+
+| |	
+
+COMMENT
+{*}

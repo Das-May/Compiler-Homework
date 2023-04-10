@@ -41,7 +41,7 @@ char* Loader::Input(const char* filePath)
     return c;
 }
 
-void Loader::Output(const char* processed)    
+void Loader::Output(const char* processed)
 {
     // 处理文件保存路径
     cout << "文件保存路径： " << filePath << endl;
