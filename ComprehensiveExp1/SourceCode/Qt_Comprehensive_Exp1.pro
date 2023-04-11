@@ -17,11 +17,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     Loader.cpp \
+    RegularExpression2NFA.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     Loader.h \
+    RegularExpression2NFA.h \
     mainwindow.h
 
 FORMS += \
