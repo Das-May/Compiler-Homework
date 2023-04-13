@@ -31,8 +31,17 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
         }
 
         // 跳过->
+        bool end = false;
         while(*GrammarBuffer == ' ' || *GrammarBuffer == '-' || *GrammarBuffer == '>')
         {
+            if(*GrammarBuffer == '>')
+            {
+                end = true;
+            }
+            else if(end && *GrammarBuffer == '-')//防止吞并文法符号，例如-，--，-=
+            {
+                break;
+            }
             GrammarBuffer++;
         }
 
@@ -93,32 +102,48 @@ void GrammarProcessor::OrganizeID2Word()
     TempID2Word[101] = "$";
     TerminalLatestID = 102;
 
+    map<int, int> UpdateID;
+
     for(auto pair : ID2Word)
     {
         if(IsNonTerminal[pair.first] == true)
         {
             TempID2Word[NonterminalLatestID] = pair.second;
+            UpdateID[pair.first] = NonterminalLatestID;
             NonterminalLatestID++;
         }
         else
         {
             TempID2Word[TerminalLatestID] = pair.second;
+            UpdateID[pair.first] = TerminalLatestID;
             TerminalLatestID++;
         }
+
     }
 
     ID2Word = TempID2Word;
+
+    for(auto& grammar : Grammar)
+    {
+        grammar.Left = UpdateID[grammar.Left];
+        for(auto& right : grammar.Right)
+        {
+            right = UpdateID[right];
+        }
+    }
+
+    int i  = 0;
 }
-/*
+
 #pragma region "消除有害规则"{
-// 去除有害规则
+
 void GrammarProcessor::RemoveHarmfulRules()
 {
     list<Rule>::iterator it = Grammar.begin();
     int size = Grammar.size();
     for(int i = 0; i < size; i++, it++)
     {
-        if((*it).right.size() == 1 && (*it).left == (*it).right[0]) // U->U
+        if((*it).Right.size() == 1 && (*it).Left == (*it).Right[0]) // U->U
         {
             it = Grammar.erase(it);
             it--;
@@ -126,68 +151,68 @@ void GrammarProcessor::RemoveHarmfulRules()
     }
 }
 
-// 删除不可达规则
 void GrammarProcessor::RemoveUnreachableRules()
 {
-    memset(TempSet, 0, sizeof(TempSet));
-    TempSet[0] = 1;    // 将左部开始符号放入集合中
+    bool Reachable[200];
+    memset(Reachable, 0, sizeof(Reachable));
+    Reachable[0] = true; // 将左部开始符号放入集合中
     for(auto& grammar : Grammar)
     {
-        if(TempSet[grammar.Left] == 1)   // 若左部在集合中
+        if(Reachable[grammar.Left] == true) // 若左部在集合中
         {
             for(auto& right : grammar.Right)
             {
-                if(isVn(r)) // 非终结符号
+                if(IsNonterminal(right)) // 对于右部的每个非终结符号
                 {
-                    TempSet[r] = 1;    // 将右部的每个非终结符也放入“可到达集合”中
+                    Reachable[right] = true; // 放入“可到达集合”中
                 }
             }
         }
 
     }
 
-    list<Rule>::iterator it = grammar.begin();
-    int size = grammar.size();
+    list<Rule>::iterator it = Grammar.begin();
+    int size = Grammar.size();
     for(int i = 0; i < size; i++, it++)
     {
-        if(temp_set[(*it).left] == 0)
+        if(Reachable[(*it).Left] == false)
         {
-            it = grammar.erase(it);
+            it = Grammar.erase(it);
             it--;
         }
     }
 }
 
 // 删除不终止规则
-bool GrammarProcessor::RemoveUnterminableRules_sub(int vn, int depth)
+bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
 {
-    if(temp_set[vn] != -1)
-        return temp_set[vn];
+    if(TempSet[NonterminalID] != -1)
+        return TempSet[NonterminalID];
 
     if(depth == 5)
         return false;
 
-    bool tag = false;
-    bool endable;
-    for(auto& g : grammar)
+    bool Processed = false;
+    bool Endable;
+    for(auto& grammar : Grammar)
     {
-        endable = true;
-        if(g.left == vn)    // 遍历以A为左部的每个文法
+        Endable = true;
+        if(grammar.Left == NonterminalID)    // 遍历以A为左部的每个文法
         {
-            tag = true;
-            for(auto& r : g.right)
+            Processed = true;
+            for(int RightID : grammar.Right)
             {
-                if(isVn(r))
+                if(IsNonterminal(RightID))
                 {
-                    if(r == vn)// 满足A->αAβ形式
+                    if(RightID == NonterminalID)// 满足A->αAβ形式
                     {
-                        endable = false;
+                        Endable = false;
                         continue;
                     }
                     else//存在其它非终结符
                     {
-                        endable = RemoveUnterminableRules_sub(r, depth + 1);
-                        if(endable == true)
+                        Endable = RemoveUnterminableRules_sub(RightID, depth + 1);
+                        if(Endable == true)
                         {
                             break;
                         }
@@ -195,41 +220,41 @@ bool GrammarProcessor::RemoveUnterminableRules_sub(int vn, int depth)
                 }
             }
         }
-        else if(tag == true) //（剪枝操作）
+        else if(Processed == true) //（剪枝操作）
         {
             break;
         }
     }
-    temp_set[vn] = endable && tag;
-    return endable;
+    TempSet[NonterminalID] = Endable && Processed;
+    return Endable;
 }
 
 // 删除不可终止规则
 void GrammarProcessor::RemoveUnterminableRules()
 {
-    memset(temp_set, -1, sizeof(temp_set));
+    memset(TempSet, -1, sizeof(TempSet)); // 意为Unterminable，是否可终止
     RemoveUnterminableRules_sub(0, 0);
-    for(int i = 0; i < NonterminalLatestID; i++)
+    for(int ID = 0; ID < NonterminalLatestID; ID++)
     {
-        if(temp_set[i] == 0)    // 如果该字符被判为不可达
+        if(TempSet[ID] == 0)    // 如果该字符A被判为不可终止
         {
-            list<Rule>::iterator it = grammar.begin();
-            int size = grammar.size();
-            for(int j = 0; j < size; j++, it++)
+            list<Rule>::iterator it = Grammar.begin();
+            int size = Grammar.size();
+            for(int j = 0; j < size; j++, it++) // 遍历所有文法
             {
-                cout << "(*it).left" << (*it).left << endl;
-                if((*it).left == i)         // 左部含有不可终结的符号
+                cout << "(*it).left" << (*it).Left << endl;
+                if((*it).Left == ID)         // 左部含有该字符A
                 {
-                    it = grammar.erase(it);
+                    it = Grammar.erase(it);
                     it--;
                 }
                 else
                 {
-                    for(auto& r : (*it).right)
+                    for(int RightID : (*it).Right)
                     {
-                        if(r == i)  // 右部含有不可终结的符号
+                        if(RightID == ID)  // 右部含有该字符A
                         {
-                            it = grammar.erase(it);
+                            it = Grammar.erase(it);
                             it--;
                             break;
                         }
@@ -237,14 +262,13 @@ void GrammarProcessor::RemoveUnterminableRules()
                 }
             }
 
-            v[i] = 0;//在字典中也移除这个单词
+            ID2Word.erase(ID2Word.find(ID));//在字典中也移除A
         }
     }
 }
 
 #pragma endregion }
 
-// 返回化简后的文法
 string GrammarProcessor::SimplifyGrammar()
 {
     RemoveHarmfulRules();
@@ -252,7 +276,7 @@ string GrammarProcessor::SimplifyGrammar()
     RemoveUnterminableRules();
     return PrintGrammar();
 }
-
+/*
 #pragma region "获取First(x)"{
 void GrammarProcessor::GetFirst_sub(int x)
 {
@@ -593,47 +617,30 @@ string GrammarProcessor::RemoveLeftRecursion()
     OrganizeGrammar();
     return PrintGrammar();
 }
-
-// 打印单条文法
-string GrammarProcessor::PrintRule(Rule r)
+*/
+string GrammarProcessor::PrintRule(const Rule& Rule)
 {
-    string r_string;
-    r_string = v[r.left];
-    r_string = r_string + "->";
-    for(auto& j : r.right)
+    string ret;
+    ret = ID2Word[Rule.Left];
+    ret += " -> ";
+    for(int RightID : Rule.Right)
     {
-        r_string += v[j];
+        ret += ID2Word[RightID] + " ";
     }
-    r_string += '\n';
-    return r_string;
+    ret += '\n';
+    return ret;
 }
 
-// 打印全部文法
 string GrammarProcessor::PrintGrammar()
 {
-    string g_string;
-    for(auto& i : grammar)
+    string ret;
+    for(auto& grammar : Grammar)
     {
-        g_string += PrintRule(i);
+        ret += PrintRule(grammar);
     }
-    return g_string;
+    return ret;
 }
 
-// 添加非终结符
-void GrammarProcessor::AddVn(string word)
-{
-    if(value2key(c) == -1)  // 如果字典里还没记录这个符号
-    {
-        ID2Word[NonterminalLatestID] = c;       // 新增
-        //vn.push_back(NonterminalLatestID);
-        NonterminalLatestID++;
-
-        if(c > n_char)
-            n_char = c;
-    }
-
-}
-*/
 int GrammarProcessor::Word2ID(string TargetWord)
 {
     for(auto & pair : ID2Word)
@@ -644,27 +651,17 @@ int GrammarProcessor::Word2ID(string TargetWord)
     cout << "---Error: Can not find ID from '" << TargetWord << "'!---" << endl;
     return -1;
 }
-/*
-// 添加终结符
-void GrammarProcessor::AddVt(char c)
-{
-    if(value2key(c) == -1)  // 如果字典里还没记录这个符号
-    {
-        v[TerminalLatestID] = c;
-        TerminalLatestID++;
-    }
-}
 
-bool GrammarProcessor::isVn(int num)
+bool GrammarProcessor::IsNonterminal(int num)
 {
     return (num < 100 && num >= 0);
 }
 
-bool GrammarProcessor::isVt(int num)
+bool GrammarProcessor::IsTerminal(int num)
 {
-    return (num >= 100);
+    return (num >= 100 && num < 200);
 }
-
+/*
 // 整理字典
 void GrammarProcessor::OrganizeDict()
 {
@@ -706,9 +703,9 @@ void GrammarProcessor::OrganizeDict()
 
     v = temp_v;
 }
-
+*/
 void GrammarProcessor::OrganizeGrammar()
 {
     Grammar.sort();
 }
-*/
+

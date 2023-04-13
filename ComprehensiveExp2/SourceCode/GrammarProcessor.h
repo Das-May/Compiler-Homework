@@ -37,18 +37,22 @@ private:
     list<int> first;            // first集采用深度优先算法生成，故在函数外定义存储结构
 
     /*工具函数*/
-    void AddVn(char c);         // 添加非终结符
-    void AddVt(char c);         // 添加终结符
-    string PrintRule(Rule r);   // 打印文法
+    /**
+     * @brief Print a single rule, whose simbols are transformed to specific expression
+     * @param The rule which you want to print
+     * @return Specific grammar rule string
+     */
+    string PrintRule(const Rule& rule);
+
     /**
      * @brief Find the corresponding ID by Word in ID2Word
      * @param the word we known
      * @return the ID of the Word; if the key is not existed, return -1.
      */
-    int Word2ID(string TargetWord);      // 根据符号查找映射表中的序号
-    bool isVn(int num);         // 判断是否为非终结符
-    bool isVt(int num);         // 判断是否为终结符
-    bool find(vector<int>::iterator a, vector<int>::iterator b, int value);// 查询容器中是否含有某值（不知为何Qt中用不了std::find(…)）
+    int Word2ID(string TargetWord);
+
+    bool IsNonterminal(int num);
+    bool IsTerminal(int num);
     void OrganizeDict();        // 整理映射表，去除已经被删去的字符索引
 
     /**
@@ -63,7 +67,7 @@ private:
 
     void RemoveHarmfulRules();
     void RemoveUnreachableRules();
-    bool RemoveUnterminableRules_sub(int vn, int depth);
+    bool RemoveUnterminableRules_sub(int NonterminalID, int depth);
     void RemoveUnterminableRules();
 
     void GetFirst_sub(int x);
