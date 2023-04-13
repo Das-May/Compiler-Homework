@@ -20,19 +20,19 @@ char* Loader::ReadText(const char* FilePath)
     // 记录文件读取路径
     Loader::FilePath = new char[strlen(FilePath) + 1];
     strcpy(Loader::FilePath, FilePath);
-    cout << "文件读取路径： " << Loader::FilePath << endl;
+    cout << "FilePath: " << Loader::FilePath << endl;
 
     // 获取文本长度
     Reader.seekg(0, ios::end);
     int len = Reader.tellg();
-    cout << "文件内容长度： " << len << endl;
+    cout << "Length: " << len << endl;
 
     // 获取文本内容
     Reader.seekg(0, ios::beg);
     char* c = new char[ len + 1 ];
     memset(c, 0, len + 1);
-    Reader.read(c,len);
-    cout << "文件内容： " << c << endl;
+    Reader.read(c, len - 14);
+    cout << "Content: " << c << endl;
 
     Reader.close();
 

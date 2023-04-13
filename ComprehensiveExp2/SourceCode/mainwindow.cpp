@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
 
                 ui->TE_BNF->setText(QString(c));
 
+                GrammarProcessorInstance = new GrammarProcessor(c);
+
 
             }
         }

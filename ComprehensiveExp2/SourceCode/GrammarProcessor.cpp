@@ -1,48 +1,126 @@
 #include "GrammarProcessor.h"
 
+#include <algorithm>
+#include <iostream>
+
 // 初始化函数，创建字符字典和文法规则
-GrammarProcessor::GrammarProcessor(char *c, bool NeedPreprocess)
+GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
 {
-    AddVt('#'); // ε
-    AddVt('$'); // $
-
-    Rule temp_r;
-    for (; *c != 0 && *c != '\n'; c++)
+    Rule TempRule;
+    string TempWord = "";
+    int LatestID = 0;
+    while(*GrammarBuffer != 0 && *GrammarBuffer != '\n')
     {
-        AddVn(*c);
-        temp_r.left = value2key(*c);
-
-        c += 3;
-
-        temp_r.right.clear();
-        for(; *c!='\n' && *c != 0; c++)
+        // 读取左部
+        TempWord = "";
+        while(*GrammarBuffer != ' ')
         {
-            if(*c >= 'A' && *c <= 'Z')
+            TempWord += *GrammarBuffer;
+            GrammarBuffer++;
+        }
+        int ID = Word2ID(TempWord);
+        if(ID == -1)
+        {
+            ID2Word[LatestID] = TempWord;
+            TempRule.Left = LatestID;
+            LatestID++;
+        }
+        else
+        {
+            TempRule.Left = ID;
+        }
+
+        // 跳过->
+        while(*GrammarBuffer == ' ' || *GrammarBuffer == '-' || *GrammarBuffer == '>')
+        {
+            GrammarBuffer++;
+        }
+
+        // 读取右部
+        TempRule.Right.clear();
+        while(*GrammarBuffer != '\n' && *GrammarBuffer != 0)
+        {
+            TempWord = "";
+            while(*GrammarBuffer != '\n' && *GrammarBuffer != ' ' &&
+                  *GrammarBuffer != 0 && *GrammarBuffer != '\r')
             {
-                AddVn(*c);
-                temp_r.right.push_back(value2key(*c));
+                TempWord += *GrammarBuffer;
+                GrammarBuffer++;
+            }
+
+            int ID = Word2ID(TempWord);
+            if(ID == -1)
+            {
+                ID2Word[LatestID] = TempWord;
+                TempRule.Right.push_back(LatestID);
+                LatestID++;
             }
             else
             {
-                AddVt(*c);
-                temp_r.right.push_back(value2key(*c));
+                TempRule.Right.push_back(ID);
+            }
+
+            // 跳过空格和间隔
+            while(*GrammarBuffer == ' ' || *GrammarBuffer == '|' || *GrammarBuffer == '\r')
+            {
+                GrammarBuffer++;
             }
         }
-        grammar.push_back(temp_r);
+
+        Grammar.push_back(TempRule);
+
+        // 跳过换行符
+        if(*GrammarBuffer != 0)
+        {
+            GrammarBuffer++;
+        }
     }
+    OrganizeID2Word();
 }
 
+void GrammarProcessor::OrganizeID2Word()
+{
+    bool IsNonTerminal[200];
+    memset(IsNonTerminal, false, sizeof(IsNonTerminal));
+    for(Rule& grammar : Grammar)
+    {
+        IsNonTerminal[grammar.Left] = true;
+    }
+
+    map<int, string> TempID2Word;
+    NonterminalLatestID = 0;
+    TempID2Word[100] = "#"; // epslion
+    TempID2Word[101] = "$";
+    TerminalLatestID = 102;
+
+    for(auto pair : ID2Word)
+    {
+        if(IsNonTerminal[pair.first] == true)
+        {
+            TempID2Word[NonterminalLatestID] = pair.second;
+            NonterminalLatestID++;
+        }
+        else
+        {
+            TempID2Word[TerminalLatestID] = pair.second;
+            TerminalLatestID++;
+        }
+    }
+
+    ID2Word = TempID2Word;
+}
+/*
 #pragma region "消除有害规则"{
 // 去除有害规则
 void GrammarProcessor::RemoveHarmfulRules()
 {
-    list<Rule>::iterator it = grammar.begin();
-    int size = grammar.size();
+    list<Rule>::iterator it = Grammar.begin();
+    int size = Grammar.size();
     for(int i = 0; i < size; i++, it++)
     {
         if((*it).right.size() == 1 && (*it).left == (*it).right[0]) // U->U
         {
-            it = grammar.erase(it);
+            it = Grammar.erase(it);
             it--;
         }
     }
@@ -51,17 +129,17 @@ void GrammarProcessor::RemoveHarmfulRules()
 // 删除不可达规则
 void GrammarProcessor::RemoveUnreachableRules()
 {
-    memset(temp_set, 0, sizeof(temp_set));
-    temp_set[0] = 1;    // 将左部开始符号放入集合中
-    for(auto& g : grammar)
+    memset(TempSet, 0, sizeof(TempSet));
+    TempSet[0] = 1;    // 将左部开始符号放入集合中
+    for(auto& grammar : Grammar)
     {
-        if(temp_set[g.left] == 1)   // 若左部在集合中
+        if(TempSet[grammar.Left] == 1)   // 若左部在集合中
         {
-            for(auto& r : g.right)
+            for(auto& right : grammar.Right)
             {
                 if(isVn(r)) // 非终结符号
                 {
-                    temp_set[r] = 1;    // 将右部的每个非终结符也放入“可到达集合”中
+                    TempSet[r] = 1;    // 将右部的每个非终结符也放入“可到达集合”中
                 }
             }
         }
@@ -131,7 +209,7 @@ void GrammarProcessor::RemoveUnterminableRules()
 {
     memset(temp_set, -1, sizeof(temp_set));
     RemoveUnterminableRules_sub(0, 0);
-    for(int i = 0; i < n_num; i++)
+    for(int i = 0; i < NonterminalLatestID; i++)
     {
         if(temp_set[i] == 0)    // 如果该字符被判为不可达
         {
@@ -226,7 +304,7 @@ string GrammarProcessor::GetFirst()
 {
     string allFirst = "";
     vector<int> temp_vector;
-    for(int i = 0; i < n_num; i++)
+    for(int i = 0; i < NonterminalLatestID; i++)
     {
         if(v[i] != 0)
         {
@@ -311,7 +389,7 @@ string GrammarProcessor::GetFollow()
 {
     string allFollow = "";
     vector<int> temp_vector;
-    for(int i = 0; i < n_num; i++)
+    for(int i = 0; i < NonterminalLatestID; i++)
     {
         if(v[i] != 0)
         {
@@ -389,7 +467,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
                     {
                         if(temp_set[k] == -1)
                         {
-                            temp_set[k] = n_num;// 让根结点存储对应的新非终结符序号
+                            temp_set[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
                             AddVn(n_char + 1);// 分配新非终结符字符
 
                             int a = (*it2)->right[0];
@@ -436,8 +514,8 @@ string GrammarProcessor::RemoveLeftRecursion()
 {
     vector<vector<int>> rule_right;
     vector<int> temp_right;
-    int n_num_max = n_num;
-    for(int i = 0; i < n_num_max; i++) // 遍历每个非终结符号，设当前符号为Vni
+    int NonterminalLatestID_max = NonterminalLatestID;
+    for(int i = 0; i < NonterminalLatestID_max; i++) // 遍历每个非终结符号，设当前符号为Vni
     {
         if(v[i] != 0)
         {
@@ -472,12 +550,12 @@ string GrammarProcessor::RemoveLeftRecursion()
 
                     AddVn(n_char + 1); // 新增非终结符B
                     // 将文法A->AX修改为文法B->XB
-                    g.left = n_num - 1;
+                    g.left = NonterminalLatestID - 1;
                     g.right.erase(g.right.begin());
-                    g.right.push_back(n_num - 1);
+                    g.right.push_back(NonterminalLatestID - 1);
                     // 新增文法B->ε
                     Rule temp_rule;
-                    temp_rule.left = n_num - 1;
+                    temp_rule.left = NonterminalLatestID - 1;
                     temp_rule.right.push_back(value2key('#'));
                     grammar.push_back(temp_rule);
                     break;
@@ -491,7 +569,7 @@ string GrammarProcessor::RemoveLeftRecursion()
                 {
                     if(g.left == i)
                     {
-                        g.right.push_back(n_num - 1); // 将B追加到最右部
+                        g.right.push_back(NonterminalLatestID - 1); // 将B追加到最右部
                         if(tag == false)
                         {
                             tag = true;
@@ -515,109 +593,6 @@ string GrammarProcessor::RemoveLeftRecursion()
     OrganizeGrammar();
     return PrintGrammar();
 }
-
-#pragma region "获取NFA"{
-// 左线性转NFA
-bool GrammarProcessor::LL2NFA()
-{
-    bool isLL = true;
-    for(auto & g :grammar)
-    {
-
-    }
-    return isLL;
-}
-
-// 右线性转NFA
-bool GrammarProcessor::RL2NFA()
-{
-    //遍历每条文法，检测是否满足右线性
-    for(auto & g :grammar)
-    {
-        int size = g.right.size();
-        vector<int>::iterator it = g.right.begin();
-        if(size == 1)//A->a
-        {
-            if(! isVt(g.right[0]))
-                return false;
-        }
-        else if(size == 2)//A->aB
-        {
-            size--;
-            for(int i = 0; i < size; i++, it++ )//右部前面的都是终结符号
-            {
-                if(! isVt((*it)))
-                    return false;
-            }
-            if( !isVn( g.right[size] ) ) //右部最右的符号是非终结符号
-                return false;
-        }
-        else {
-            return false;
-        }
-    }
-
-    // 满足
-    AddVn('Z');//新增非终结符Z作为终态结点
-    int row = n_num + 1;
-    int col = t_num - 100;
-    vector<char> temp;
-
-    temp.push_back(row);//第一格存储行列
-    temp.push_back(col);
-    NFA.push_back(temp);
-    temp.clear();
-
-    for(int i = 1; i < row * col; i++)//初始化NFA表格
-    {
-        if(i < col)
-        {
-            temp.push_back(v[i + 100]);//为表行头添加对应的终结符（转移条件）
-        }
-        else if(i % col == 0)
-        {
-            temp.push_back(v[(i / col) - 1]);//为表列头添加对应的非终结符（结点）
-        }
-        NFA.push_back(temp);
-        temp.clear();
-    }
-
-    int rowcount, colcount;
-    for(auto & g :grammar)//填写NFA表格
-    {
-        int size = g.right.size();
-        rowcount = g.left + 1;
-        colcount = g.right[0] - 100;
-        if(size == 1)//A->a
-        {
-
-            NFA[col * rowcount + colcount].push_back('Z');
-        }
-        else//A->aB
-        {
-            /*size--;
-            int l = g.left;
-            for(int i = 0; i < size; i++)//右部前面的都是终结符号*/
-            NFA[col * rowcount + colcount].push_back(v[g.right[1]]);
-        }
-    }
-
-    return true;
-}
-
-vector<vector<char>> GrammarProcessor::GetNFA()
-{
-    NFA.clear();
-    OrganizeDict();
-    RL2NFA();/*
-    if(! LL2NFA())
-    {
-
-    }*/
-    return NFA;
-}
-
-#pragma endregion }
 
 // 打印单条文法
 string GrammarProcessor::PrintRule(Rule r)
@@ -645,40 +620,39 @@ string GrammarProcessor::PrintGrammar()
 }
 
 // 添加非终结符
-void GrammarProcessor::AddVn(char c)
+void GrammarProcessor::AddVn(string word)
 {
     if(value2key(c) == -1)  // 如果字典里还没记录这个符号
     {
-        v[n_num] = c;       // 新增
-        //vn.push_back(n_num);
-        n_num++;
+        ID2Word[NonterminalLatestID] = c;       // 新增
+        //vn.push_back(NonterminalLatestID);
+        NonterminalLatestID++;
 
         if(c > n_char)
             n_char = c;
     }
 
 }
-
+*/
+int GrammarProcessor::Word2ID(string TargetWord)
+{
+    for(auto & pair : ID2Word)
+    {
+        if(pair.second == TargetWord)
+            return pair.first;
+    }
+    cout << "---Error: Can not find ID from '" << TargetWord << "'!---" << endl;
+    return -1;
+}
+/*
 // 添加终结符
 void GrammarProcessor::AddVt(char c)
 {
     if(value2key(c) == -1)  // 如果字典里还没记录这个符号
     {
-        v[t_num] = c;
-        t_num++;
+        v[TerminalLatestID] = c;
+        TerminalLatestID++;
     }
-}
-
-// 根据值查找出字典中的键
-int GrammarProcessor::value2key(char c)
-{
-    for(auto & i : v)
-    {
-        if(i.second == c)
-            return i.first;
-    }
-    cout << "---Error: Can not find key from '" << c << "'!---" << endl;
-    return -1;
 }
 
 bool GrammarProcessor::isVn(int num)
@@ -689,16 +663,6 @@ bool GrammarProcessor::isVn(int num)
 bool GrammarProcessor::isVt(int num)
 {
     return (num >= 100);
-}
-
-// qt找不到find函数，我也不知道为什么，所以我重写了
-bool GrammarProcessor::find(vector<int>::iterator a, vector<int>::iterator b, int value)
-{
-    vector<int>::iterator it = a;
-    for( ; it != b; it++)
-        if(*it == value)
-            return true;
-    return false;
 }
 
 // 整理字典
@@ -717,7 +681,7 @@ void GrammarProcessor::OrganizeDict()
     int i, j;
     j = 0;
     map<int, char> temp_v;
-    for(i = 0; i < n_num; i++)
+    for(i = 0; i < NonterminalLatestID; i++)
     {
         if(temp_set[i] == 1)
         {
@@ -725,12 +689,12 @@ void GrammarProcessor::OrganizeDict()
             j++;
         }
     }
-    n_num = j;
+    NonterminalLatestID = j;
 
     temp_v[100] = '$';
     temp_v[101] = '#';
     j = 102;
-    for(i = 102; i < t_num; i++)
+    for(i = 102; i < TerminalLatestID; i++)
     {
         if(temp_set[i] == 1)
         {
@@ -738,13 +702,13 @@ void GrammarProcessor::OrganizeDict()
             j++;
         }
     }
-    t_num = j;
+    TerminalLatestID = j;
 
     v = temp_v;
 }
 
-// 整理文法
 void GrammarProcessor::OrganizeGrammar()
 {
-    grammar.sort();
+    Grammar.sort();
 }
+*/
