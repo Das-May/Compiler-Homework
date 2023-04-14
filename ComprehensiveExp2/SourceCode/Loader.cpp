@@ -31,7 +31,7 @@ char* Loader::ReadText(const char* FilePath)
     Reader.seekg(0, ios::beg);
     char* c = new char[ len + 1 ];
     memset(c, 0, len + 1);
-    Reader.read(c, len - 14);
+    Reader.read(c, len - 10);
     cout << "Content: " << c << endl;
 
     Reader.close();

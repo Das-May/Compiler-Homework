@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
 
                 ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
 
-                //ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
+                ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
             }
         }
     );

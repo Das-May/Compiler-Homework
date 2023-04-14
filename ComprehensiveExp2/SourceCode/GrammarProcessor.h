@@ -72,9 +72,9 @@ private:
     void OrganizeID2Word();
 
     /**
-     * @brief Organize the grammar rules by the left ID
+     * @brief Sort the grammar rules by the left ID
      */
-    void OrganizeGrammar();
+    void SortGrammar();
 
     void RemoveHarmfulRules();
     void RemoveUnreachableRules();
