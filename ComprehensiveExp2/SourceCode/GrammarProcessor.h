@@ -51,6 +51,17 @@ private:
      */
     int Word2ID(string TargetWord);
 
+    /**
+     * @brief Add non-terminal to ID2Word
+     * @param BaseSymbol : the new non-terminal was transformed from the base symbol, generally, append "'" after it.
+     */
+    void AddNonterminal(string BaseSymbol);
+    /**
+     * @brief Add terminal to ID2Word
+     * @param BaseSymbol : the new terminal was transformed from the base symbol, generally, append "'" after it.
+     */
+    void AddTerminal(string BaseSymbol);
+
     bool IsNonterminal(int num);
     bool IsTerminal(int num);
     void OrganizeDict();        // 整理映射表，去除已经被删去的字符索引

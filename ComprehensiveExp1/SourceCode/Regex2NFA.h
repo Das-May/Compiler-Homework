@@ -26,15 +26,10 @@ struct NfaChunk {
 	}
 };
 
-class RegularExpression2NFA
+class Regex2NFA
 {
 public:
     vector<vector<int>> GetNFA(string Regex);
-
-    vector<vector<int>> GetDFA(const vector<vector<int>>& NFA);
-    vector<vector<int>> GetDFA();
-
-    vector<vector<int>> GetMinDFA();
 
 private:
     NfaChunk Connect(NfaChunk a, NfaChunk b);
@@ -48,11 +43,6 @@ private:
     void ChangeNFAGraphToTable();
     void DFSNFA(NfaNode* root);
 
-    void GenerateDFA(const vector<vector<int>>& NFA);
-
-    void GenerateMinDFA(const vector<vector<int>>& DFA);
-    void Combine(int srcRow, int destRow);
-
 private:
     NfaChunk NFAGraph;
 	int maxId;
@@ -60,8 +50,5 @@ private:
     bool** mark;					// 二维数组，用于在遍历的时候标记已路过的结点
 
     vector<vector<int>> NFATable;           // NFA表
-    vector<vector<int>> DFATable;           // DFA表
-    vector<int> SimpleDFATable;             // 化简后的DFA表
-    vector<vector<int>> MinDFATable;		// 最小化的DFA表
 };
 

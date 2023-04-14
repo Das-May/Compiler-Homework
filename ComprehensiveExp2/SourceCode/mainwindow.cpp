@@ -27,7 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
 
                 ui->TE_Simplified->setText(QString::fromStdString(GrammarProcessorInstance->SimplifyGrammar()));
 
-                //ui->TE_RemoveLeftRecursion->setText();
+                ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
+
+                //ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
             }
         }
     );

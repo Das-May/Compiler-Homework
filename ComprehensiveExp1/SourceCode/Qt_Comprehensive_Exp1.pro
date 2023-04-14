@@ -16,14 +16,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Automata.cpp \
     Loader.cpp \
-    RegularExpression2NFA.cpp \
+    Regex2NFA.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    Automata.h \
     Loader.h \
-    RegularExpression2NFA.h \
+    Regex2NFA.h \
     mainwindow.h
 
 FORMS += \

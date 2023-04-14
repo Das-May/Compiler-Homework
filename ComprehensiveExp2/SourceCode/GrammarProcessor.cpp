@@ -276,18 +276,18 @@ string GrammarProcessor::SimplifyGrammar()
     RemoveUnterminableRules();
     return PrintGrammar();
 }
-/*
+
 #pragma region "获取First(x)"{
 void GrammarProcessor::GetFirst_sub(int x)
 {
     bool tag = false;
-    for(auto& g : grammar)
+    for(auto& g : Grammar)
     {
-        if(g.left == x)    // 遍历以X为左部的每个文法
+        if(g.Left == x)    // 遍历以X为左部的每个文法
         {
             tag = true;
-            int a = g.right[0]; // 取文法右部第一个字符假设为a
-            if( isVt(a) )     // 若a是终结符或ε
+            int a = g.Right[0]; // 取文法右部第一个字符假设为a
+            if( IsTerminal(a) )     // 若a是终结符或ε
             {
                 bool repeat = false;
                 for(list<int>::iterator it = first.begin(); it != first.end(); it++)
@@ -317,7 +317,7 @@ void GrammarProcessor::GetFirst_sub(int x)
 list<int>& GrammarProcessor::GetFirst(int x)
 {
     first.clear();
-    if(isVn(x))
+    if(IsNonterminal(x))
         GetFirst_sub(x);
     else
         first.push_back(x);
@@ -338,7 +338,7 @@ string GrammarProcessor::GetFirst()
             temp_vector.clear();
             for(auto& element : GetFirst(i))
             {
-                if(find(temp_vector.begin(), temp_vector.end(), element) == false)
+                if(find(temp_vector.begin(), temp_vector.end(), element) == temp_vector.end())
                     temp_vector.push_back(element);
             }
             for(auto& element : temp_vector)
@@ -352,7 +352,7 @@ string GrammarProcessor::GetFirst()
     return allFirst;
 }
 #pragma endregion }
-
+/*
 #pragma region "获取Follow(x)"{
 list<int> GrammarProcessor::GetFollow(int x)
 {
@@ -437,47 +437,48 @@ string GrammarProcessor::GetFollow()
     return allFollow;
 }
 #pragma endregion }
-
+*/
 // 消除左公因子
 string GrammarProcessor::RemoveLeftCommonFactor()
 {
-    list<list<Rule>::iterator> leftEqual2i;
+    list<list<Rule>::iterator> SameLeftRules;
+    int Union[200];
     int i = 0;
     map<list<int>, int> m;
     int n = 0;
 
-    list<Rule>::iterator it = grammar.begin();
-    for(; it != grammar.end(); it++)// 遍历每个非终结符号，设当前符号为Vni
+    list<Rule>::iterator it = Grammar.begin();
+    for(; it != Grammar.end(); it++)// 遍历每个非终结符号，设当前符号为Vni
     {
-        if((*it).left == i)    // 遍历以Vni为左部的每个文法
+        if((*it).Left == i)    // 遍历以Vni为左部的每个文法
         {
-            leftEqual2i.push_back(it); // 装入容器list<Rule>中
+            SameLeftRules.push_back(it); // 装入容器list<Rule>中
         }
         else    // 左部i改变了，说明上一个遍历完了
         {
             // 处理上一个非终结符号
-            if(leftEqual2i.size() != 1) // 若个数n≠1
+            if(SameLeftRules.size() != 1) // 若个数n≠1
             {
                 // 定义字典map<vector, int>，和数组union[ n ]（初始化为0）
                 m.clear();
-                memset(temp_set, 0, sizeof (temp_set) );
+                memset(Union, 0, sizeof (Union) );
                 n = 1;// !!!
                 int tag = false;
 
-                for(auto & rule:leftEqual2i ) // 遍历以Vni为左部的文法
+                for(auto & rule : SameLeftRules ) // 遍历以Vni为左部的文法
                 {
-                    int right = (*rule).right[0]; // 右部第一个字符
-                    list<int> f = GetFirst(right);
+                    int Right = (*rule).Right[0]; // 右部第一个字符
+                    list<int> f = GetFirst(Right);
                     if(m[f] == 0) // 若字典未记录
                     {
                         m[f] = n;
-                        //temp_set[n] = -1;// 则union[m1]=-1
+                        //Union[n] = -1;// 则union[m1]=-1
                     }
                     else // 若字典已有某个集合
                     {
                         tag = true; //标记存在union[m]≠0
-                        temp_set[n] = m[f]; // 则union[m1]=n
-                        temp_set[m[f]] = -1;
+                        Union[n] = m[f]; // 则union[m1]=n
+                        Union[m[f]] = -1;
                     }
                     n++;
 
@@ -485,47 +486,48 @@ string GrammarProcessor::RemoveLeftCommonFactor()
 
                 if(tag != 0) // 存在union[m]≠0
                 {
-                    list<list<Rule>::iterator>::iterator it2 = leftEqual2i.begin();
+                    list<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
                     Rule temp_rule;
-                    for(int k = 1; k < n, it2 != leftEqual2i.end(); k++, it2++)
+                    for(int k = 1; k < n, it2 != SameLeftRules.end(); k++, it2++)
                     {
-                        if(temp_set[k] == -1)
+                        if(Union[k] == -1)
                         {
-                            temp_set[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
-                            AddVn(n_char + 1);// 分配新非终结符字符
+                            Union[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
+                            AddNonterminal(ID2Word[k]);// 分配新非终结符字符
+                            // TODO: ID2Word[k]是对的吗?
 
-                            int a = (*it2)->right[0];
-                            (*it2)->right.erase((*it2)->right.begin());
+                            int a = (*it2)->Right[0];
+                            (*it2)->Right.erase((*it2)->Right.begin());
 
                             // 新增文法C->B
-                            temp_rule.left = temp_set[k];
-                            if((*it2)->right.size() == 0)
-                                temp_rule.right.push_back(value2key('#')); // epslion（ε）
+                            temp_rule.Left = Union[k];
+                            if((*it2)->Right.size() == 0)
+                                temp_rule.Right.push_back(Word2ID("#")); // epslion（ε）
                             else
-                                temp_rule.right = (*it2)->right;
-                            grammar.push_back(temp_rule);
+                                temp_rule.Right = (*it2)->Right;
+                            Grammar.push_back(temp_rule);
                             // 把文法文法A->aB改为文法A->aC
-                            (*it2)->right.clear();
-                            (*it2)->right.push_back(a);
-                            (*it2)->right.push_back(temp_set[k]);
+                            (*it2)->Right.clear();
+                            (*it2)->Right.push_back(a);
+                            (*it2)->Right.push_back(Union[k]);
 
                         }
-                        else if(temp_set[k] != 0)
+                        else if(Union[k] != 0)
                         {
                             // 将文法A->aB修改为文法C->B
-                            (*it2)->right.erase((*it2)->right.begin());//移除a
-                            if((*it2)->right.size() == 0)
-                                (*it2)->right.push_back(value2key('#'));//epslion
-                            (*it2)->left = temp_set[temp_set[k]];// 把A改成C
+                            (*it2)->Right.erase((*it2)->Right.begin());//移除a
+                            if((*it2)->Right.size() == 0)
+                                (*it2)->Right.push_back(Word2ID("#"));//epslion
+                            (*it2)->Left = Union[Union[k]];// 把A改成C
                         }
                     }
                 }
             }
 
             // 处理当前非终结符号
-            i = (*it).left;
-            leftEqual2i.clear();
-            leftEqual2i.push_back(it);
+            i = (*it).Left;
+            SameLeftRules.clear();
+            SameLeftRules.push_back(it);
 
         }
     }
@@ -533,6 +535,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
     return PrintGrammar();
 }
 
+/*
 // 消除左递归
 string GrammarProcessor::RemoveLeftRecursion()
 {
@@ -650,6 +653,20 @@ int GrammarProcessor::Word2ID(string TargetWord)
     }
     cout << "---Error: Can not find ID from '" << TargetWord << "'!---" << endl;
     return -1;
+}
+
+void GrammarProcessor::AddNonterminal(string BaseSymbol)
+{
+    string NewSymbol = BaseSymbol + "'";
+    if(Word2ID(NewSymbol) == -1)  // 如果字典里还没记录这个符号
+    {
+        ID2Word[NonterminalLatestID] = NewSymbol;// 新增
+        NonterminalLatestID++;
+    }
+    else
+    {
+        cout << "Add new non-terminal '" << NewSymbol << "' failed!" << endl;
+    }
 }
 
 bool GrammarProcessor::IsNonterminal(int num)
