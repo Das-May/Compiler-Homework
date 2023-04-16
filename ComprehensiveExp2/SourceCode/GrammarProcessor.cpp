@@ -4,7 +4,6 @@
 #include <set>
 #include <iostream>
 
-// 初始化函数，创建字符字典和文法规则
 GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
 {
     Rule TempRule;
@@ -105,21 +104,33 @@ void GrammarProcessor::OrganizeID2Word()
 
     map<int, int> UpdateID;
 
-    for(auto pair : ID2Word)
+    for(Rule& grammar : Grammar)
     {
-        if(IsNonTerminal[pair.first] == true)
+        if(UpdateID.find(grammar.Left) == UpdateID.end())
         {
-            TempID2Word[NonterminalLatestID] = pair.second;
-            UpdateID[pair.first] = NonterminalLatestID;
+            TempID2Word[NonterminalLatestID] = ID2Word[grammar.Left];
+            UpdateID[grammar.Left] = NonterminalLatestID;
             NonterminalLatestID++;
         }
-        else
-        {
-            TempID2Word[TerminalLatestID] = pair.second;
-            UpdateID[pair.first] = TerminalLatestID;
-            TerminalLatestID++;
-        }
 
+        for(int Right : grammar.Right)
+        {
+            if(UpdateID.find(Right) == UpdateID.end())
+            {
+                if(IsNonTerminal[Right] == true)
+                {
+                    TempID2Word[NonterminalLatestID] = ID2Word[Right];
+                    UpdateID[Right] = NonterminalLatestID;
+                    NonterminalLatestID++;
+                }
+                else
+                {
+                    TempID2Word[TerminalLatestID] = ID2Word[Right];
+                    UpdateID[Right] = TerminalLatestID;
+                    TerminalLatestID++;
+                }
+            }
+        }
     }
 
     ID2Word = TempID2Word;
@@ -127,9 +138,9 @@ void GrammarProcessor::OrganizeID2Word()
     for(auto& grammar : Grammar)
     {
         grammar.Left = UpdateID[grammar.Left];
-        for(auto& right : grammar.Right)
+        for(int& Right : grammar.Right)
         {
-            right = UpdateID[right];
+            Right = UpdateID[Right];
         }
     }
 
@@ -146,7 +157,7 @@ void GrammarProcessor::RemoveHarmfulRules()
     {
         if((*it).Right.size() == 1 && (*it).Left == (*it).Right[0]) // U->U
         {
-            it = Grammar.erase(it);
+            it = Grammar.erase(it);     // 删除有害的文法规则
             it--;
         }
     }
@@ -178,13 +189,12 @@ void GrammarProcessor::RemoveUnreachableRules()
     {
         if(Reachable[(*it).Left] == false)
         {
-            it = Grammar.erase(it);
+            it = Grammar.erase(it); // 删除不可达的文法规则
             it--;
         }
     }
 }
 
-// 删除不终止规则
 bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
 {
     if(TempSet[NonterminalID] != -1)
@@ -246,7 +256,7 @@ void GrammarProcessor::RemoveUnterminableRules()
                 cout << "(*it).left" << (*it).Left << endl;
                 if((*it).Left == ID)         // 左部含有该字符A
                 {
-                    it = Grammar.erase(it);
+                    it = Grammar.erase(it);// 删除该不可终止的文法规则
                     it--;
                 }
                 else
@@ -255,15 +265,13 @@ void GrammarProcessor::RemoveUnterminableRules()
                     {
                         if(RightID == ID)  // 右部含有该字符A
                         {
-                            it = Grammar.erase(it);
+                            it = Grammar.erase(it);// 删除该不可终止的文法规则
                             it--;
                             break;
                         }
                     }
                 }
             }
-
-            ID2Word.erase(ID2Word.find(ID));//在字典中也移除A
         }
     }
 }
@@ -275,10 +283,11 @@ string GrammarProcessor::SimplifyGrammar()
     RemoveHarmfulRules();
     RemoveUnreachableRules();
     RemoveUnterminableRules();
+    OrganizeID2Word();
     return PrintGrammar();
 }
 
-#pragma region "获取First(x)"{
+#pragma region "GetFirst(x)"{
 void GrammarProcessor::GetFirst_sub(int x)
 {
     bool tag = false;
@@ -331,10 +340,10 @@ string GrammarProcessor::GetFirst()
     vector<int> temp_vector;
     for(int i = 0; i < NonterminalLatestID; i++)
     {
-        if(v[i] != 0)
+        if(ID2Word.find(i) != ID2Word.end())
         {
             allFirst += "First(";
-            allFirst += v[i];
+            allFirst += ID2Word[i];
             allFirst += ")={" ;
             temp_vector.clear();
             for(auto& element : GetFirst(i))
@@ -344,7 +353,7 @@ string GrammarProcessor::GetFirst()
             }
             for(auto& element : temp_vector)
             {
-                allFirst += v[element];
+                allFirst += ID2Word[element];
                 allFirst += ", ";
             }
             allFirst += "}\n";
@@ -354,7 +363,7 @@ string GrammarProcessor::GetFirst()
 }
 #pragma endregion }
 
-#pragma region "获取Follow(x)"{
+#pragma region "GetFollow(x)"{
 list<int> GrammarProcessor::GetFollow(int x)
 {
     list<int> Follow;
@@ -440,7 +449,6 @@ string GrammarProcessor::GetFollow()
 }
 #pragma endregion }
 
-// 消除左公因子
 string GrammarProcessor::RemoveLeftCommonFactor()
 {
     list<list<Rule>::iterator> SameLeftRules;
@@ -539,7 +547,6 @@ string GrammarProcessor::RemoveLeftCommonFactor()
     return PrintGrammar();
 }
 
-// 消除左递归
 string GrammarProcessor::RemoveLeftRecursion()
 {
     // ID2Right[i]即以i为左部的规则的右部
@@ -632,27 +639,40 @@ string GrammarProcessor::RemoveLeftRecursion()
     return PrintGrammar();
 }
 
+vector<Rule> GrammarProcessor::GetLL1Table()
+{
+    vector<Rule> LL1Table;
+    Rule TempRule;
+
+    OrganizeID2Word();
+    int Row = NonterminalLatestID;
+    int Col = TerminalLatestID;
+
+
+    return LL1Table;
+}
+
 string GrammarProcessor::PrintRule(const Rule& Rule)
 {
-    string ret;
-    ret = ID2Word[Rule.Left];
-    ret += " -> ";
+    string Ret;
+    Ret = ID2Word[Rule.Left];
+    Ret += " -> ";
     for(int RightID : Rule.Right)
     {
-        ret += ID2Word[RightID] + " ";
+        Ret += ID2Word[RightID] + " ";
     }
-    ret += '\n';
-    return ret;
+    Ret += '\n';
+    return Ret;
 }
 
 string GrammarProcessor::PrintGrammar()
 {
-    string ret;
+    string Ret;
     for(auto& grammar : Grammar)
     {
-        ret += PrintRule(grammar);
+        Ret += PrintRule(grammar);
     }
-    return ret;
+    return Ret;
 }
 
 int GrammarProcessor::Word2ID(string TargetWord)
@@ -689,49 +709,7 @@ bool GrammarProcessor::IsTerminal(int num)
 {
     return (num >= 100 && num < 200);
 }
-/*
-// 整理字典
-void GrammarProcessor::OrganizeDict()
-{
-    memset(temp_set, 0, sizeof(temp_set));
-    for(auto & g : grammar)
-    {
-        temp_set[g.left] = 1;
-        for(auto & r : g.right)
-        {
-            temp_set[r] = 1;
-        }
-    }
 
-    int i, j;
-    j = 0;
-    map<int, char> temp_v;
-    for(i = 0; i < NonterminalLatestID; i++)
-    {
-        if(temp_set[i] == 1)
-        {
-            temp_v[j] = v[i];
-            j++;
-        }
-    }
-    NonterminalLatestID = j;
-
-    temp_v[100] = '$';
-    temp_v[101] = '#';
-    j = 102;
-    for(i = 102; i < TerminalLatestID; i++)
-    {
-        if(temp_set[i] == 1)
-        {
-            temp_v[j] = v[i];
-            j++;
-        }
-    }
-    TerminalLatestID = j;
-
-    v = temp_v;
-}
-*/
 void GrammarProcessor::SortGrammar()
 {
     Grammar.sort();

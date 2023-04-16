@@ -36,13 +36,14 @@ private:
     int TempSet[200];          // 算法中多次用到并查集的思想，所以预先分配一个数组
     list<int> first;            // first集采用深度优先算法生成，故在函数外定义存储结构
 
-    /*工具函数*/
+
+private:
     /**
      * @brief Print a single rule, whose simbols are transformed to specific expression
      * @param The rule which you want to print
      * @return Specific grammar rule string
      */
-    string PrintRule(const Rule& rule);
+    string PrintRule(const Rule& Rule);
 
     /**
      * @brief Find the corresponding ID by Word in ID2Word
@@ -64,7 +65,6 @@ private:
 
     bool IsNonterminal(int num);
     bool IsTerminal(int num);
-    void OrganizeDict();        // 整理映射表，去除已经被删去的字符索引
 
     /**
      * @brief Organize map ID2Word, divide terminal(0~99) and non-terminal(100~199)
@@ -88,6 +88,10 @@ private:
     list<int> GetFollow(int x);
 
 public:
+    /**
+     * @brief Create symbol dictionary and grammar rules
+     * @param grammar rules text, see readme.md for the text format
+     */
     GrammarProcessor(char *c);
 
     string SimplifyGrammar();
@@ -97,9 +101,10 @@ public:
     string GetFollow();
 
     string RemoveLeftCommonFactor();
+
     string RemoveLeftRecursion();
 
-    string GetRegularExpression();
+    vector<Rule> GetLL1Table();
 
     string PrintGrammar();
 };
