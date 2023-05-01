@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 
-#include <map>
 #include <vector>
 using namespace std;
 
@@ -22,12 +21,23 @@ public:
 private:
     Ui::MainWindow *ui;
 
+    /**
+     * @brief TypeCount Start at 0
+     */
     int TypeCount;
-    map<int, string> TypeName;
-    map<int, vector<vector<int>>> MinDFA;
-    int* TypeStatus;
+    vector<string> TypeName;
+    vector<vector<vector<int>>> MinDFA;
 
+    /**
+     * @brief Read regular expression and parse them to MinDFA
+     * @param c : The regular expression string of different keywords
+     */
     void ProcessRegex(char* c);
+    /**
+     * @brief Generate c++ code that can be compiled and implemented for lexical analysis
+     * @return The code string
+     */
+    string GenerateCode();
 
 };
 #endif // MAINWINDOW_H

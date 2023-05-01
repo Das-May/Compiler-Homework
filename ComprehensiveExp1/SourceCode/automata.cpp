@@ -182,7 +182,10 @@ vector<vector<int>> Automata::SimplifyDFA(const vector<vector<int>>& DFA)
     return SimplifiedDFA;
 }
 
-int Automata::FindSetIndex(const vector<set<int>>& StatusGroup, int Target)
+/**
+ * @brief If Target belong to StatusGroup[index], return index
+ */
+int FindSetIndex(const vector<set<int>>& StatusGroup, int Target)
 {
     for(int i = 0; i < StatusGroup.size(); i++)
         for(int ID : StatusGroup[i])
@@ -207,7 +210,7 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
     int MinDFARow = 0;
     int MinDFACol = DFACol;
     vector<int> EndState;
-    for(int i = 2; i < SimplifiedDFA[0].size(); i++)
+    for(int i = 3; i < SimplifiedDFA[0].size(); i++)
         EndState.push_back(SimplifiedDFA[0][i]);
 
     map<int, int> Condition2ColIndex;
@@ -216,39 +219,37 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
 
     map<int, int> ID2RowIndex;  // 请确保传入的DFA是简化后的DFA，否则DFA图节点没有唯一的ID
     for (int i = DFACol; i < DFARow * DFACol; i+=DFACol)
-        Condition2ColIndex[SimplifiedDFA[i][0]] = i;
-
-    // 初始化
-    TableCell.clear();
-    MinDFA.push_back(TableCell);
-    for (int i = 1; i < MinDFACol; i++) // 第一行（转移条件）与DFA一致
-        MinDFA.push_back(SimplifiedDFA[i]);
+        ID2RowIndex[SimplifiedDFA[i][0]] = i;
 
     //对于DFA中的每个状态，分为接受状态组（包含NFA终态z）和非接受状态组（不包含z）
     for(int state : EndState)
         TempSet.insert(state);
     StatusGroup.push_back(TempSet);// 接受状态组StatusGroup[0]
     TempSet.clear();
-    for(vector<int> cell : SimplifiedDFA)
-        if(find(EndState.begin(), EndState.end(), cell[0]) == EndState.end())
-            TempSet.insert(cell[0]);
+    for(int i = DFACol; i < DFARow * DFACol; i++)
+        for(int ID : SimplifiedDFA[i])
+            if(find(EndState.begin(), EndState.end(), ID) == EndState.end())
+                TempSet.insert(ID);
     StatusGroup.push_back(TempSet);// 非接受状态组StatusGroup[1]
     TempSet.clear();
 
-    bool flag = true;
+    bool flag = true;//是否存在新的划分
     set<int>::iterator FrontID;
-    while(flag)
+    while(flag)// 如果不存在新的划分时，终止循环
     {
         flag = false;
-        for(set<int> Group : StatusGroup)
+        for(set<int>& Group : StatusGroup)
         {
-            // TempStatusGroup的大小设为Group.size()
+            // TempStatusGroup的大小设为StatusGroup.size()
+            TempSet.clear();
             for(int i = 0; i < StatusGroup.size(); i++)
                 TempStatusGroup.push_back(TempSet);
 
             // 遍历每个FrontID--Condition-->BackID
-            for(FrontID = Group.begin(); FrontID != Group.end(); FrontID++)
+            FrontID = Group.begin();
+            while(FrontID != Group.end())
             {
+                bool next = false;
                 for(auto element : Condition2ColIndex)
                 {
                     for(int BackID : SimplifiedDFA[ID2RowIndex[*FrontID] + element.second])
@@ -256,56 +257,79 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
                         // BackID与FrontID不同集合
                         if(Group.find(BackID) == Group.end())
                         {
-                            flag = true;    // 标记，存在新的划分
-
                             int SetIndex = FindSetIndex(StatusGroup, BackID);
                             if(SetIndex != -1)
                                 TempStatusGroup[SetIndex].insert(*FrontID);
 
                             cout << "erase " << *FrontID << endl;
                             FrontID = Group.erase(FrontID); // erase之后，函数返回下一容器的头指针
-                            FrontID--;                      // 与for循环里的++相抵消
+                            next = true;
+                            break;
                         }
                     }
-
+                    if(next)
+                        break;
                 }
+                if(next == false)
+                    FrontID++;
             }
 
             // 将NewGroup中的不为空的组并入旧组，清空NewGroup
+            int count = 0;
             for(set<int> NewGroup : TempStatusGroup)
-            {
                 if(!NewGroup.empty())
                 {
+                    count++;
                     StatusGroup.push_back(NewGroup);
                 }
-            }
+
+            if(count > 1)
+                flag = true;// 标记，存在新的划分
+
             TempStatusGroup.clear();
         }
     }
 
-    // 合并
-    MinDFARow = StatusGroup.size();
-    int LatestID = 1;
-    for(set<int> Group : StatusGroup)
+    // 填充MinDFA表格
+    MinDFARow = StatusGroup.size() + 1;
+    TableCell.clear();
+    MinDFA.push_back(TableCell);    // 第一格
+    MinDFA[0].push_back(MinDFARow);     // 记录行数
+    MinDFA[0].push_back(MinDFACol);     // 记录列数
+    MinDFA[0].push_back(FindSetIndex(StatusGroup, SimplifiedDFA[0][2]) + 1);             // 记录开始结点
+    for(int i = 3; i < SimplifiedDFA[0].size(); i++)
     {
-        TableCell.clear();
-        for (int i = 0; i < MinDFACol; i++)
-        {
-            MinDFA.push_back(TableCell);
-        }
-
-        for(int ID : Group)
-        {
-            MinDFA[LatestID * MinDFACol].push_back(ID);
-            for (int i = 1; i < MinDFACol; i++)
-            {
-                MinDFA[LatestID * MinDFACol + i].push_back(SimplifiedDFA[ID2RowIndex[ID] * DFACol + i][0]);
-            }
-        }
+        int id = FindSetIndex(StatusGroup, SimplifiedDFA[0][i]) + 1;
+        if(find(MinDFA[0].begin(), MinDFA[0].end(), id) == MinDFA[0].end())// 去重
+            MinDFA[0].push_back(id);    // 记录终态结点
+    }
+    for (int i = 1; i < MinDFACol; i++) // 第一行（转移条件）与DFA一致
+        MinDFA.push_back(SimplifiedDFA[i]);
+    for (int i = MinDFACol; i < MinDFARow * MinDFACol; i++)
+    {
+        MinDFA.push_back(TableCell);
+        if(i % MinDFACol == 0)
+            MinDFA[i].push_back(i / MinDFACol);
     }
 
-    MinDFA[0].push_back(MinDFARow);
-    MinDFA[0].push_back(MinDFACol);
+    for(int i = DFACol; i < DFARow * DFACol; i++)
+    {
+        int col = i % DFACol;
+        if(col == 0 || SimplifiedDFA[i].size() == 0)
+            continue;
+
+        int id = FindSetIndex(StatusGroup, SimplifiedDFA[i][0]) + 1;
+        int row = i / DFACol;
+        row = SimplifiedDFA[row * DFACol][0];
+        row = FindSetIndex(StatusGroup, row) + 1;
+
+        int targetIndex = row * MinDFACol + col;
+        if(find(MinDFA[targetIndex].begin(), MinDFA[targetIndex].end(), id) == MinDFA[targetIndex].end())
+            MinDFA[row * MinDFACol + col].push_back(id);
+    }
+
+    cout << "=== MinDFA ===" << endl;
+    PrintTable(MinDFA);
     return MinDFA;
 }
 

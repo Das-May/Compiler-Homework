@@ -29,10 +29,6 @@ private:
      * @brief Assign a unique ID to each node of the DFA
      */
     static vector<vector<int>> SimplifyDFA(const vector<vector<int>>& DFA);
-    /**
-     * @brief If Target belong to StatusGroup[index], return index
-     */
-    static int FindSetIndex(const vector<set<int>>& StatusGroup, int Target);
     static void PrintTable(const vector<vector<int>>& FATable);
 };
 
