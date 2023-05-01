@@ -14,11 +14,11 @@ vector<vector<int>> Automata::GetDFA(const vector<vector<int>>& NFA)
     cout << "=== DFA ===" << endl;
     PrintTable(DFA);
 
-    SimplifyDFA(DFA);
+    vector<vector<int>> SimplifiedDFA = SimplifyDFA(DFA);
     cout << "=== SimplifiedDFA ===" << endl;
-    PrintTable(DFA);
+    PrintTable(SimplifiedDFA);
 
-    return DFA;
+    return SimplifiedDFA;
 }
 
 /**
@@ -47,7 +47,6 @@ vector<vector<int>> Automata::GenerateDFA(const vector<vector<int>>& NFA)
     vector<int> Latest;
     int LatestDFARowIndex;
     queue<char> q;
-//    int currentId;
 
     // 建立{NFA图结点ID -> NFA表下标}映射表
     map<int, int> ID2Index;
@@ -68,7 +67,6 @@ vector<vector<int>> Automata::GenerateDFA(const vector<vector<int>>& NFA)
     }
 
     // 从NFA的起始节点开始，把StartNode--ε-->OtherNode全都放进第二行第一列
-    // TODO:epslion能到达更深的层次
     TableCell.clear();
     DFS(NFA, TableCell, NFA[0][2]);
     StateNode.push(TableCell);
@@ -144,39 +142,44 @@ vector<vector<int>> Automata::GenerateDFA(const vector<vector<int>>& NFA)
     return DFA;
 }
 
-void Automata::SimplifyDFA(vector<vector<int>>& DFA)
+vector<vector<int>> Automata::SimplifyDFA(const vector<vector<int>>& DFA)
 {
+    vector<vector<int>> SimplifiedDFA = DFA;
+    vector<int> TableCell;
+    map<vector<int>, int> NodeToID;
+
     int LatestID = 1;
     int Row = DFA[0][0];
     int Col = DFA[0][1];
     const int EndID = DFA[0][3];
-    DFA[0].pop_back();
-    DFA[0].pop_back();
-    DFA[0].push_back(1);// 起始节点的ID为1
-    map<vector<int>, int> NodeToID;
+
+    SimplifiedDFA[0].pop_back();
+    SimplifiedDFA[0].pop_back();
+    SimplifiedDFA[0].push_back(1);
 
     for(int i = Col; i < Row * Col; i++)
     {
+        if(DFA[i].size() == 0)
+            continue;
+
+        // 分配新ID
         if(NodeToID.find(DFA[i]) == NodeToID.end())
         {
             NodeToID[DFA[i]] = LatestID;
 
             // 如果这个DFA结点是终结点，则记录在表头
-            for(int ID : DFA[i])
-            {
-                if(ID == EndID)
-                {
-                    DFA[0].push_back(LatestID);
-                    break;
-                }
-            }
+            if(find(DFA[i].begin(), DFA[i].end(), EndID) != DFA[i].end())
+                SimplifiedDFA[0].push_back(LatestID);
 
             LatestID++;
         }
 
-        DFA[i].clear();
-        DFA[i].push_back(NodeToID[DFA[i]]);
+        // 改写
+        SimplifiedDFA[i].clear();
+        SimplifiedDFA[i].push_back(NodeToID[DFA[i]]);
     }
+
+    return SimplifiedDFA;
 }
 
 int Automata::FindSetIndex(const vector<set<int>>& StatusGroup, int Target)
@@ -308,6 +311,9 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
 
 void Automata::PrintTable(const vector<vector<int>>& FATable)
 {
+    if(FATable.size() > 200)
+        return;
+
     int row = FATable[0][0];
     int col = FATable[0][1];
     string output = "";
@@ -328,5 +334,6 @@ void Automata::PrintTable(const vector<vector<int>>& FATable)
     }
     cout << output;
     cout.flush();
+
     int i = 0;
 }

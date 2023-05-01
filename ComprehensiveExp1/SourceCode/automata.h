@@ -28,7 +28,7 @@ private:
     /**
      * @brief Assign a unique ID to each node of the DFA
      */
-    static void SimplifyDFA(vector<vector<int>>& DFA);
+    static vector<vector<int>> SimplifyDFA(const vector<vector<int>>& DFA);
     /**
      * @brief If Target belong to StatusGroup[index], return index
      */
