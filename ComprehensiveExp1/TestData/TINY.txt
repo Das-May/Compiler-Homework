@@ -1,18 +1,15 @@
+COMMENT
+{.*}
+
 KEYWORD
-if|then|else|end|repeat|until|read|write|IF|THEN|ELSE|END|REPEAT|UNTIL|READ|WRITE
+(if)|(then)|(else)|(end)|(repeat)|(until)|(read)|(write)|(IF)|(THEN)|(ELSE)|(END)|(REPEAT)|(UNTIL)|(READ)|(WRITE)
 
 OPERATOR
-+|–|*|/|<|=|;|:=
++|-|\*|/|<|=|;|:=
 
 IDENTIFER
-letter letter*
+(letter)(letter)*
 
 NUMBER
-digit digit*
+(digit)(digit)*
 
-SPACE
-
-| |	
-
-COMMENT
-{*}

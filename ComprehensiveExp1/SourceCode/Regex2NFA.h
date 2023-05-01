@@ -32,11 +32,26 @@ public:
     vector<vector<int>> GetNFA(string Regex);
 
 private:
+    /**
+     * @brief Generate a new NfaChunk
+     */
+    NfaChunk GenerateNFAChunk(char c);
+
+    /**
+     * @brief Connect two words
+     */
     NfaChunk Connect(NfaChunk a, NfaChunk b);
+    /**
+     * @brief Regex operator *
+     */
     NfaChunk Expand_zero(NfaChunk a);
-    NfaChunk Expand_one(NfaChunk a);
+    /**
+     * @brief Regex operator ?
+     */
     NfaChunk Choose(NfaChunk a);
-    NfaChunk And(char c);
+    /**
+     * @brief Regex operator |
+     */
     NfaChunk Or(NfaChunk a, NfaChunk b);
 
     void GenerateNFA(string Regex);
@@ -50,5 +65,7 @@ private:
     bool** mark;					// 二维数组，用于在遍历的时候标记已路过的结点
 
     vector<vector<int>> NFATable;           // NFA表
+    int NFARow;
+    int NFACol;
 };
 

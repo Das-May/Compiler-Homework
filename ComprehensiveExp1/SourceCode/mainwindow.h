@@ -3,6 +3,10 @@
 
 #include <QMainWindow>
 
+#include <map>
+#include <vector>
+using namespace std;
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -17,6 +21,13 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    int TypeCount;
+    map<int, string> TypeName;
+    map<int, vector<vector<int>>> MinDFA;
+    int* TypeStatus;
+
+    void ProcessRegex(char* c);
 
 };
 #endif // MAINWINDOW_H
