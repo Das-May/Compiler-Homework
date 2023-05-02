@@ -31,20 +31,23 @@ void Regex2NFA::GenerateNFA(string Regex)
     for(int i = 0; i < Regex.size(); i++)
 	{
         char c = Regex[i];
-        if (!IsRegexOperator(c))
+        if(c == '\\')// 转义符
+        {
+            i++;
+            s.push(GenerateNFAChunk(Regex[i]));
+            if (count(totalCondition.begin(), totalCondition.end(), Regex[i]) == 0)// 如果容器中还记录过这个转移条件
+                totalCondition.push_back(Regex[i]);//记录
+        }
+        else if (!IsRegexOperator(c))// 一般字符
 		{
             s.push(GenerateNFAChunk(c));
-            if (count(totalCondition.begin(), totalCondition.end(), c) == 0)// 如果容器中还记录过这个转移条件
-				totalCondition.push_back(c);//记录
+            if (count(totalCondition.begin(), totalCondition.end(), c) == 0)
+                totalCondition.push_back(c);
 		}
-		else 
+        else // 运算符
 		{
 			switch (c)
 			{
-                case '\\':
-                    i++;
-                    s.push(GenerateNFAChunk(Regex[i]));
-                    break;
                 case '*':
                     tempChunk = Expand_zero(s.top());
                     s.pop();

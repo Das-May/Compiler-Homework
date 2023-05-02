@@ -5,6 +5,36 @@
 #include <algorithm>
 #include <iostream>
 
+void PrintTable(const vector<vector<int>>& FATable)
+{
+    if(FATable.size() > 200)
+        return;
+
+    int row = FATable[0][0];
+    int col = FATable[0][1];
+    string output = "";
+    for(int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            output += '|';
+            for(int id : FATable[i * col + j])
+            {
+                if(i == 0 && j != 0)
+                    output += id;
+                else
+                    output += to_string(id) + ",";
+            }
+            output += "\t\t";
+        }
+        output += '\n';
+    }
+    cout << output;
+    cout.flush();
+
+    int i = 0;
+}
+
 vector<vector<int>> Automata::GetDFA(const vector<vector<int>>& NFA)
 {
     cout << "=== NFA ===" << endl;
@@ -238,7 +268,7 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
     while(flag)// 如果不存在新的划分时，终止循环
     {
         flag = false;
-        for(set<int>& Group : StatusGroup)
+        for(set<int>& Group : StatusGroup)// 1.遍历每个状态集
         {
             // TempStatusGroup的大小设为StatusGroup.size()
             TempSet.clear();
@@ -247,15 +277,28 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
 
             // 遍历每个FrontID--Condition-->BackID
             FrontID = Group.begin();
-            while(FrontID != Group.end())
+            for(auto element : Condition2ColIndex)// 2.遍历每个转移条件
             {
-                bool next = false;
-                for(auto element : Condition2ColIndex)
+                int defaultBackID = -1; // -1代表不存在下一节点
+                while(FrontID != Group.end())// 3.遍历状态集里的每个id
                 {
+                    bool next = false;
                     for(int BackID : SimplifiedDFA[ID2RowIndex[*FrontID] + element.second])
                     {
-                        // BackID与FrontID不同集合
-                        if(Group.find(BackID) == Group.end())
+                        // 初次赋值
+                        if(defaultBackID == -1 && FrontID == Group.begin())
+                        {
+                            defaultBackID = BackID;
+                            continue;
+                        }
+
+                        // 下一节点一样
+                        if(BackID == defaultBackID)
+                            continue;
+
+                        // 下一节点不一样,并且与默认值所属的集合也不一样
+                        if((defaultBackID == -1) ||
+                            (FindSetIndex(StatusGroup, defaultBackID) != FindSetIndex(StatusGroup, BackID) ))
                         {
                             int SetIndex = FindSetIndex(StatusGroup, BackID);
                             if(SetIndex != -1)
@@ -264,31 +307,33 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
                             cout << "erase " << *FrontID << endl;
                             FrontID = Group.erase(FrontID); // erase之后，函数返回下一容器的头指针
                             next = true;
-                            break;
                         }
                     }
-                    if(next)
-                        break;
+                    if(next == false)
+                        FrontID++;
                 }
-                if(next == false)
-                    FrontID++;
+                // 将TempStatusGroup中的不为空的组并入旧组，清空TempStatusGroup
+                for(set<int> NewGroup : TempStatusGroup)
+                    if(!NewGroup.empty())
+                    {
+                        flag = true;// 标记，存在新的划分
+                        StatusGroup.push_back(NewGroup);
+                    }
             }
-
-            // 将NewGroup中的不为空的组并入旧组，清空NewGroup
-            int count = 0;
-            for(set<int> NewGroup : TempStatusGroup)
-                if(!NewGroup.empty())
-                {
-                    count++;
-                    StatusGroup.push_back(NewGroup);
-                }
-
-            if(count > 1)
-                flag = true;// 标记，存在新的划分
-
             TempStatusGroup.clear();
         }
     }
+
+    // TODO: comment多了状态4,5
+    // 去除空集
+//    vector<set<int>>::iterator GroupIt = StatusGroup.begin();
+//    while(GroupIt != StatusGroup.end())
+//    {
+//        if(GroupIt->size() == 0)
+//            GroupIt = StatusGroup.erase(GroupIt);
+//        else
+//            GroupIt++;
+//    }
 
     // 填充MinDFA表格
     MinDFARow = StatusGroup.size() + 1;
@@ -333,31 +378,3 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
     return MinDFA;
 }
 
-void Automata::PrintTable(const vector<vector<int>>& FATable)
-{
-    if(FATable.size() > 200)
-        return;
-
-    int row = FATable[0][0];
-    int col = FATable[0][1];
-    string output = "";
-    for(int i = 0; i < row; i++)
-    {
-        for(int j = 0; j < col; j++)
-        {
-            for(int id : FATable[i * col + j])
-            {
-                if(i == 0 && j != 0)
-                    output += id;
-                else
-                    output += to_string(id) + ",";
-            }
-            output += "\t\t";
-        }
-        output += '\n';
-    }
-    cout << output;
-    cout.flush();
-
-    int i = 0;
-}

@@ -228,9 +228,9 @@ string MainWindow::GenerateCode()
         code += "table.clear();\n";
         for(const vector<int>& cell : table)
         {
-            code += "cell.clear();\n";
+            code += "cell.clear();";
             for(const int id : cell)
-                code += "cell.push_back(" + to_string(id) + ");\n";
+                code += "cell.push_back(" + to_string(id) + ");";
             code += "table.push_back(cell);\n";
         }
         code += "MinDFA.push_back(table);\n";

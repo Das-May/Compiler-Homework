@@ -1,11 +1,11 @@
+KEYWORD
+(if)|(then)|(else)|(end)|(repeat)|(until)|(read)|(write)|(IF)|(THEN)|(ELSE)|(END)|(REPEAT)|(UNTIL)|(READ)|(WRITE)
+
 OPERATOR
 +|-|\*|/|<|=|;|:=
 
 COMMENT
 {.*}
-
-KEYWORD
-(if)|(then)|(else)|(end)|(repeat)|(until)|(read)|(write)|(IF)|(THEN)|(ELSE)|(END)|(REPEAT)|(UNTIL)|(READ)|(WRITE)
 
 IDENTIFER
 (letter)(letter)*

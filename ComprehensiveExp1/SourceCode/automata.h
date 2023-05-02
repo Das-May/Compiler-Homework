@@ -29,7 +29,7 @@ private:
      * @brief Assign a unique ID to each node of the DFA
      */
     static vector<vector<int>> SimplifyDFA(const vector<vector<int>>& DFA);
-    static void PrintTable(const vector<vector<int>>& FATable);
+    //static void PrintTable(const vector<vector<int>>& FATable);
 };
 
 #endif // AUTOMATA_H
