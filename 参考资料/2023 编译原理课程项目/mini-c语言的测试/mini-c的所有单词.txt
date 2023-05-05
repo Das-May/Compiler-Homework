@@ -1,7 +1,7 @@
 1.Mini C的单词
 
 1.下面是语言的关键字:
-e1se if  int  float  return void  do whi1e
+else if  int  float  return void  do while
 所有的关键字都是保留字,并且必须是小写。
 
 2.下面是专用符号:
