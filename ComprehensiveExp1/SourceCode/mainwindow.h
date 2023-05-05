@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include <vector>
+#include <string>
 using namespace std;
 
 QT_BEGIN_NAMESPACE
@@ -20,6 +21,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    string code;
 
     /**
      * @brief TypeCount Start at 0

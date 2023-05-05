@@ -276,10 +276,10 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
                 TempStatusGroup.push_back(TempSet);
 
             // 遍历每个FrontID--Condition-->BackID
-            FrontID = Group.begin();
             for(auto element : Condition2ColIndex)// 2.遍历每个转移条件
             {
                 int defaultBackID = -1; // -1代表不存在下一节点
+                FrontID = Group.begin();
                 while(FrontID != Group.end())// 3.遍历状态集里的每个id
                 {
                     bool next = false;
@@ -307,33 +307,39 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
                             cout << "erase " << *FrontID << endl;
                             FrontID = Group.erase(FrontID); // erase之后，函数返回下一容器的头指针
                             next = true;
+
+                            flag = true;// 标记，存在新的划分
                         }
                     }
                     if(next == false)
                         FrontID++;
                 }
+
                 // 将TempStatusGroup中的不为空的组并入旧组，清空TempStatusGroup
-                for(set<int> NewGroup : TempStatusGroup)
-                    if(!NewGroup.empty())
-                    {
-                        flag = true;// 标记，存在新的划分
-                        StatusGroup.push_back(NewGroup);
-                    }
+                if(flag)
+                {
+                    for(set<int> NewGroup : TempStatusGroup)
+                        if(!NewGroup.empty())
+                            StatusGroup.push_back(NewGroup);//此举将丢失当前Group的地址，因此借助flag回退，重新执行循环1.
+                    break;
+                }
             }
             TempStatusGroup.clear();
+            if(flag)
+                break;
         }
     }
 
     // TODO: comment多了状态4,5
     // 去除空集
-//    vector<set<int>>::iterator GroupIt = StatusGroup.begin();
-//    while(GroupIt != StatusGroup.end())
-//    {
-//        if(GroupIt->size() == 0)
-//            GroupIt = StatusGroup.erase(GroupIt);
-//        else
-//            GroupIt++;
-//    }
+    vector<set<int>>::iterator GroupIt = StatusGroup.begin();
+    while(GroupIt != StatusGroup.end())
+    {
+        if(GroupIt->size() == 0)
+            GroupIt = StatusGroup.erase(GroupIt);
+        else
+            GroupIt++;
+    }
 
     // 填充MinDFA表格
     MinDFARow = StatusGroup.size() + 1;
@@ -377,4 +383,3 @@ vector<vector<int>> Automata::GetMinDFA(const vector<vector<int>>& SimplifiedDFA
     PrintTable(MinDFA);
     return MinDFA;
 }
-

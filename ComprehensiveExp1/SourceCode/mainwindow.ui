@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>编码解析器</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -96,7 +96,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>200</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -128,7 +128,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>200</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -157,7 +157,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -192,8 +192,11 @@
                 <attribute name="horizontalHeaderVisible">
                  <bool>false</bool>
                 </attribute>
+                <attribute name="horizontalHeaderCascadingSectionResizes">
+                 <bool>true</bool>
+                </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>200</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -253,8 +256,11 @@
                 <attribute name="horizontalHeaderVisible">
                  <bool>false</bool>
                 </attribute>
+                <attribute name="horizontalHeaderCascadingSectionResizes">
+                 <bool>true</bool>
+                </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -287,6 +293,9 @@
               <item>
                <widget class="QTableWidget" name="TW_NFA_2">
                 <attribute name="horizontalHeaderVisible">
+                 <bool>false</bool>
+                </attribute>
+                <attribute name="horizontalHeaderCascadingSectionResizes">
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
@@ -322,7 +331,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -351,7 +360,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -387,7 +396,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -419,7 +428,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -448,7 +457,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -484,7 +493,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -516,7 +525,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -545,7 +554,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -581,7 +590,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -613,7 +622,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>
@@ -642,7 +651,7 @@
                  <bool>false</bool>
                 </attribute>
                 <attribute name="horizontalHeaderDefaultSectionSize">
-                 <number>50</number>
+                 <number>40</number>
                 </attribute>
                 <attribute name="verticalHeaderVisible">
                  <bool>false</bool>

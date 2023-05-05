@@ -16,8 +16,17 @@ bool IsRegexOperator(char c)
     return (c=='|' || c=='*' || c=='?' || c=='(' || c==')');
 }
 
+bool IsRegexKeyword(char c)
+{
+    return (c=='.');
+}
+
 void Regex2NFA::GenerateNFA(string Regex)
 {
+    while(Regex.find("letter")!= string::npos)
+        Regex.replace(Regex.find("letter"), 6, "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)");
+    while(Regex.find("digit") != string::npos)
+        Regex.replace(Regex.find("digit"), 5, "(0|1|2|3|4|5|6|7|8|9)");
     Regex = '(' + Regex + ')';
 
     maxId = 1;
@@ -38,16 +47,10 @@ void Regex2NFA::GenerateNFA(string Regex)
             if (count(totalCondition.begin(), totalCondition.end(), Regex[i]) == 0)// 如果容器中还记录过这个转移条件
                 totalCondition.push_back(Regex[i]);//记录
         }
-        else if (!IsRegexOperator(c))// 一般字符
+        else if (IsRegexOperator(c))// 运算符
 		{
-            s.push(GenerateNFAChunk(c));
-            if (count(totalCondition.begin(), totalCondition.end(), c) == 0)
-                totalCondition.push_back(c);
-		}
-        else // 运算符
-		{
-			switch (c)
-			{
+            switch (c)
+            {
                 case '*':
                     tempChunk = Expand_zero(s.top());
                     s.pop();
@@ -92,8 +95,22 @@ void Regex2NFA::GenerateNFA(string Regex)
                 default:
                     // never enter
                     break;
-			}
-			s.push(tempChunk);
+            }
+            s.push(tempChunk);
+		}
+        else if (IsRegexKeyword(c))// 特殊字符
+        {
+            // . -> (char)1
+            // 将来如果要拓展特殊字符的种类，这部分应该改为switch-case语句
+            s.push(GenerateNFAChunk((char)1));
+            if (count(totalCondition.begin(), totalCondition.end(), (char)1) == 0)// 如果容器中还记录过这个转移条件
+                totalCondition.push_back((char)1);//记录
+        }
+        else // 一般字符
+		{
+            s.push(GenerateNFAChunk(c));
+            if (count(totalCondition.begin(), totalCondition.end(), c) == 0)
+                totalCondition.push_back(c);
 		}
 	}
 
