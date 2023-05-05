@@ -21,5 +21,9 @@ private:
     Ui::MainWindow *ui;
 
     GrammarProcessor *GrammarProcessorInstance;
+
+    void SetLL1Table();
+    void GetGrammarTree();
+
 };
 #endif // MAINWINDOW_H

@@ -26,22 +26,16 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
             LatestID++;
         }
         else
-        {
             TempRule.Left = ID;
-        }
 
         // 跳过->
         bool end = false;
         while(*GrammarBuffer == ' ' || *GrammarBuffer == '-' || *GrammarBuffer == '>')
         {
             if(*GrammarBuffer == '>')
-            {
                 end = true;
-            }
             else if(end && (*GrammarBuffer == '-' || *GrammarBuffer == '>'))//防止吞并文法符号，例如-，--，-=,>,>=
-            {
                 break;
-            }
             GrammarBuffer++;
         }
 
@@ -65,24 +59,18 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
                 LatestID++;
             }
             else
-            {
                 TempRule.Right.push_back(ID);
-            }
 
             // 跳过空格和间隔
             while(*GrammarBuffer == ' ' || *GrammarBuffer == '|' || *GrammarBuffer == '\r')
-            {
                 GrammarBuffer++;
-            }
         }
 
         Grammar.push_back(TempRule);
 
         // 跳过换行符
-        if(*GrammarBuffer != 0)
-        {
+        if(*GrammarBuffer == '\r' && *GrammarBuffer == '\n')
             GrammarBuffer++;
-        }
     }
     OrganizeID2Word();
 }
@@ -92,13 +80,11 @@ void GrammarProcessor::OrganizeID2Word()
     bool IsNonTerminal[200];
     memset(IsNonTerminal, false, sizeof(IsNonTerminal));
     for(Rule& grammar : Grammar)
-    {
         IsNonTerminal[grammar.Left] = true;
-    }
 
     map<int, string> TempID2Word;
     NonterminalLatestID = 0;
-    TempID2Word[100] = "#"; // epslion
+    TempID2Word[100] = "epslion";
     TempID2Word[101] = "$";
     TerminalLatestID = 102;
 
@@ -139,9 +125,7 @@ void GrammarProcessor::OrganizeID2Word()
     {
         grammar.Left = UpdateID[grammar.Left];
         for(int& Right : grammar.Right)
-        {
             Right = UpdateID[Right];
-        }
     }
 
     int i  = 0;
@@ -168,20 +152,11 @@ void GrammarProcessor::RemoveUnreachableRules()
     bool Reachable[200];
     memset(Reachable, 0, sizeof(Reachable));
     Reachable[0] = true; // 将左部开始符号放入集合中
-    for(auto& grammar : Grammar)
-    {
+    for(Rule grammar : Grammar)
         if(Reachable[grammar.Left] == true) // 若左部在集合中
-        {
             for(auto& right : grammar.Right)
-            {
                 if(IsNonterminal(right)) // 对于右部的每个非终结符号
-                {
                     Reachable[right] = true; // 放入“可到达集合”中
-                }
-            }
-        }
-
-    }
 
     list<Rule>::iterator it = Grammar.begin();
     int size = Grammar.size();
@@ -224,17 +199,13 @@ bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
                     {
                         Endable = RemoveUnterminableRules_sub(RightID, depth + 1);
                         if(Endable == true)
-                        {
                             break;
-                        }
                     }
                 }
             }
         }
         else if(Processed == true) //（剪枝操作）
-        {
             break;
-        }
     }
     TempSet[NonterminalID] = Endable && Processed;
     return Endable;
@@ -312,15 +283,11 @@ void GrammarProcessor::GetFirst_sub(int x)
                     first.push_back(a);
             }
             else if(a>0 && a!=x)    // 若为非终结符 并且不是本身（避免进入死循环）
-            {
                 GetFirst_sub(a);    // 则递归进入GetFirst(int a)
-            }
 
         }
         else if(tag == true) //（剪枝操作）
-        {
             break;
-        }
     }
 }
 
@@ -393,25 +360,17 @@ list<int> GrammarProcessor::GetFollow(int x)
         for(auto& r : grammar.Right)
         {
             if(r == x)
-            {
                 tag = true;
-            }
             else if(tag == true)// ③此时已遍历到β，即存在一个产生式A→αBβ
             {
                 list<int> kkk = GetFirst(r);
                 for(auto& f : kkk)
                 {
                     if(f != Word2ID("#"))    // 那么follow（B）包含first（β）-ε
-                    {
                         Follow.push_back(f);
-                    }
                     else if(grammar.Left != x)    // ④存在产生式A→αBβ且first（β）包含ε，注意A≠B
-                    {
                         for(auto& f : GetFollow(grammar.Left)) // 那么follow（B）包含follow（A）
-                        {
                             Follow.push_back(f);
-                        }
-                    }
                 }
             }
         }
@@ -433,9 +392,7 @@ string GrammarProcessor::GetFollow()
             Ret += ")={" ;
             DuplicatedFollow.clear();
             for(int ID : GetFollow(i))
-            {
                 DuplicatedFollow.insert(ID);
-            }
 
             for(auto& ID : DuplicatedFollow)
             {
@@ -463,9 +420,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
     for(; it != Grammar.end(); it++)// 遍历每个非终结符号，设当前符号为Vni
     {
         if((*it).Left == i)    // 遍历以Vni为左部的每个文法
-        {
             SameLeftRules.push_back(it); // 装入容器list<Rule>中
-        }
         else    // 左部i改变了，说明上一个遍历完了
         {
             // 处理上一个非终结符号
@@ -567,14 +522,10 @@ string GrammarProcessor::RemoveLeftRecursion()
                     {
                         // 将以Vnj为左部的文法代入到形式为Vni -> α Vnj β的文法中
                         if(j < i)
-                        {
                             for(int ID : ID2Right[j])
                                 TempRight.push_back(ID);
-                        }
                         else
-                        {
                             TempRight.push_back(j);
-                        }
                     }
                     grammar.Right = TempRight;
                 }
@@ -639,15 +590,70 @@ string GrammarProcessor::RemoveLeftRecursion()
     return PrintGrammar();
 }
 
-vector<Rule> GrammarProcessor::GetLL1Table()
+vector<vector<int>> GrammarProcessor::GetLL1Table()
 {
-    vector<Rule> LL1Table;
-    Rule TempRule;
+    vector<vector<int>> LL1Table;
+    Rule TempRule, EmptyRule;
+    vector<int> Cell;
 
     OrganizeID2Word();
-    int Row = NonterminalLatestID;
-    int Col = TerminalLatestID;
+    SortGrammar();
+    int Row = NonterminalLatestID + 1;
+    int Col = TerminalLatestID - 102 + 1;
 
+    // 初始化表头
+    Cell.push_back(Row);
+    Cell.push_back(Col);
+    LL1Table.push_back(Cell);
+
+    for(int i = 0; i < (Col-1); i++)
+    {
+        Cell.clear();
+        Cell.push_back(102 + i);
+        LL1Table.push_back(Cell);
+    }
+
+    // 初始化表体
+    for(int Index = Col, NonterminalID = 0; Index < Row*Col, NonterminalID < NonterminalLatestID; Index++)
+    {
+        if(Index % Col == 0)
+        {
+            // 回填上一行
+            if(NonterminalID-1 > 0)
+            {
+                bool tag = false;
+                for(Rule& grammar : Grammar)
+                {
+                    if(grammar.Left == NonterminalID-1)
+                    {
+                        tag = true;
+
+                        for(int Terminal : GetFirst(grammar.Right[0]))
+                        {
+                            int row = NonterminalID;
+                            int col = Terminal - 102 + 1;
+                            for(int Right : grammar.Right)
+                                LL1Table[row * Col + col].push_back(Right);
+                        }
+
+                    }
+                    else if(tag == true)
+                        break;
+                }
+            }
+
+            // 填写第一列的非终结符
+            Cell.clear();
+            Cell.push_back(NonterminalID);
+            NonterminalID++;
+            LL1Table.push_back(Cell);
+
+            Cell.clear();
+        }
+        // 先把其它列填入空vector<int>
+        else
+            LL1Table.push_back(Cell);
+    }
 
     return LL1Table;
 }
@@ -658,9 +664,7 @@ string GrammarProcessor::PrintRule(const Rule& Rule)
     Ret = ID2Word[Rule.Left];
     Ret += " -> ";
     for(int RightID : Rule.Right)
-    {
         Ret += ID2Word[RightID] + " ";
-    }
     Ret += '\n';
     return Ret;
 }
@@ -669,20 +673,17 @@ string GrammarProcessor::PrintGrammar()
 {
     string Ret;
     for(auto& grammar : Grammar)
-    {
         Ret += PrintRule(grammar);
-    }
     return Ret;
 }
 
 int GrammarProcessor::Word2ID(string TargetWord)
 {
     for(auto & pair : ID2Word)
-    {
         if(pair.second == TargetWord)
             return pair.first;
-    }
-    cout << "---Error: Can not find ID from '" << TargetWord << "'!---" << endl;
+
+    cout << "Warning: Can not find ID from '" << TargetWord << "'!" << endl;
     return -1;
 }
 
@@ -695,9 +696,7 @@ void GrammarProcessor::AddNonterminal(string BaseSymbol)
         NonterminalLatestID++;
     }
     else
-    {
         cout << "Add new non-terminal '" << NewSymbol << "' failed!" << endl;
-    }
 }
 
 bool GrammarProcessor::IsNonterminal(int num)
@@ -713,5 +712,10 @@ bool GrammarProcessor::IsTerminal(int num)
 void GrammarProcessor::SortGrammar()
 {
     Grammar.sort();
+}
+
+map<int, string> GrammarProcessor::GetID2Word()
+{
+    return ID2Word;
 }
 

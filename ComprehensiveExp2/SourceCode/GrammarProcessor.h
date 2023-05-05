@@ -4,7 +4,6 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <queue>
 #include <cstring>
 
 using namespace std;
@@ -27,15 +26,25 @@ struct Rule{
 class GrammarProcessor
 {
 private:
-    map<int, string> ID2Word;           // 字典映射表
-    map<int, char> v;           // 字典映射表
-    list<Rule> Grammar;         // 文法规则
-    //list<int> vn;               // 非终结符集合
+    /**
+     * @brief ID2Word 字典映射表
+     */
+    map<int, string> ID2Word;
+    /**
+     * @brief 存储文法规则
+     */
+    list<Rule> Grammar;
     int NonterminalLatestID = 0, TerminalLatestID = 100; // 非终结符起始符号，终结符起始符号
-    char n_char = 0;            // 记录最新的非终结符，以便分配新的非终结符字符（n_char + 1）
-    int TempSet[200];          // 算法中多次用到并查集的思想，所以预先分配一个数组
-    list<int> first;            // first集采用深度优先算法生成，故在函数外定义存储结构
 
+    /**
+     * @brief 算法中多次用到并查集的思想，所以分配一个公用的数组。
+     * 请尤其注意数组污染的问题，使用前务必初始化。
+     */
+    int TempSet[200];
+    /**
+     * @brief first集采用深度优先算法生成，为了减少传值带来的开销，故在函数外定义存储结构
+     */
+    list<int> first;
 
 private:
     /**
@@ -104,9 +113,11 @@ public:
 
     string RemoveLeftRecursion();
 
-    vector<Rule> GetLL1Table();
+    vector<vector<int>> GetLL1Table();
 
+public:
     string PrintGrammar();
+    map<int, string> GetID2Word();
 };
 
 #endif // GRAMMARPROCESSOR_H

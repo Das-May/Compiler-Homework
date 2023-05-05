@@ -109,7 +109,7 @@
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="widget">
        <attribute name="title">
         <string>文法处理</string>
        </attribute>
@@ -223,7 +223,7 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
-               <widget class="QTableWidget" name="TE_LL1"/>
+               <widget class="QTableWidget" name="TW_LL1"/>
               </item>
               <item>
                <widget class="QLabel" name="label_7">
