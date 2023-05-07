@@ -79,6 +79,7 @@ private:
      * @brief Organize map ID2Word, divide terminal(0~99) and non-terminal(100~199)
      */
     void OrganizeID2Word();
+    void OrganizeGrammar();
 
     /**
      * @brief Sort the grammar rules by the left ID

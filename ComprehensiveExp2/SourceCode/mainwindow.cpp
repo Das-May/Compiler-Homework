@@ -4,6 +4,8 @@
 #include "Loader.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QTableWidgetItem>
+#include <QString>
 
 #include <QDebug>
 
@@ -69,7 +71,32 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::SetLL1Table()
 {
+    vector<vector<int>> LL1Table = GrammarProcessorInstance->GetLL1Table();
+    map<int, string> ID2Word = GrammarProcessorInstance->GetID2Word();
 
+    int row = LL1Table[0][0];
+    int col = LL1Table[0][1];
+
+    ui->TW_LL1->setRowCount(row);
+    ui->TW_LL1->setColumnCount(col);
+    for(int i = 1; i < col; i++)
+        ui->TW_LL1->setItem(0, i, new QTableWidgetItem(QString::fromStdString(ID2Word[LL1Table[i][0]])));
+
+    for(int i = col; i < row*col; i++)
+    {
+        if(i%col==0)
+            ui->TW_LL1->setItem(i/col, 0, new QTableWidgetItem(QString::fromStdString(ID2Word[LL1Table[i][0]])));
+        else
+        {
+            if(LL1Table[i].size()>1)
+            {
+                string rule = ID2Word[LL1Table[i][0]] + " -> ";
+                for(int j = 1; j < LL1Table[i].size(); j++)
+                    rule += ID2Word[LL1Table[i][j]] + ' ';
+                ui->TW_LL1->setItem(i/col, i%col, new QTableWidgetItem(QString::fromStdString(rule)));
+            }
+        }
+    }
 }
 
 void MainWindow::GetGrammarTree()
