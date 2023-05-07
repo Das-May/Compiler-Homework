@@ -77,11 +77,6 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
 
 void GrammarProcessor::OrganizeID2Word()
 {
-    bool IsNonTerminal[200];
-    memset(IsNonTerminal, false, sizeof(IsNonTerminal));
-    for(Rule& grammar : Grammar)
-        IsNonTerminal[grammar.Left] = true;
-
     map<int, string> TempID2Word;
     NonterminalLatestID = 0;
     TempID2Word[100] = "epslion";
@@ -90,38 +85,37 @@ void GrammarProcessor::OrganizeID2Word()
 
     map<int, int> UpdateID;
 
-    for(Rule& grammar : Grammar)
+    // 处理非终结符
+    bool IsNonTerminal[200];
+    memset(IsNonTerminal, false, sizeof(IsNonTerminal));
+    for(const Rule& grammar : Grammar)
     {
-        if(UpdateID.find(grammar.Left) == UpdateID.end())
+        if(IsNonTerminal[grammar.Left] == false)
         {
+            IsNonTerminal[grammar.Left] = true;
+
             TempID2Word[NonterminalLatestID] = ID2Word[grammar.Left];
             UpdateID[grammar.Left] = NonterminalLatestID;
             NonterminalLatestID++;
         }
-
-        for(int Right : grammar.Right)
-        {
-            if(UpdateID.find(Right) == UpdateID.end())
-            {
-                if(IsNonTerminal[Right] == true)
-                {
-                    TempID2Word[NonterminalLatestID] = ID2Word[Right];
-                    UpdateID[Right] = NonterminalLatestID;
-                    NonterminalLatestID++;
-                }
-                else
-                {
-                    TempID2Word[TerminalLatestID] = ID2Word[Right];
-                    UpdateID[Right] = TerminalLatestID;
-                    TerminalLatestID++;
-                }
-            }
-        }
     }
 
+    // 处理终结符
+    for(const Rule& grammar : Grammar)
+        for(int Right : grammar.Right)
+        {
+            if(IsNonTerminal[Right] == false && UpdateID.find(Right) == UpdateID.end())
+            {
+                TempID2Word[TerminalLatestID] = ID2Word[Right];
+                UpdateID[Right] = TerminalLatestID;
+                TerminalLatestID++;
+            }
+        }
+
+    // 替换
     ID2Word = TempID2Word;
 
-    for(auto& grammar : Grammar)
+    for(Rule& grammar : Grammar)
     {
         grammar.Left = UpdateID[grammar.Left];
         for(int& Right : grammar.Right)
@@ -395,7 +389,7 @@ string GrammarProcessor::GetFollow()
     {
         Ret += "Follow(";
         Ret += ID2Word[i];
-        Ret += ")={" ;
+        Ret += ")=\n{" ;
         DuplicatedFollow.clear();
         for(int ID : GetFollow(i))
             DuplicatedFollow.insert(ID);
@@ -420,8 +414,6 @@ string GrammarProcessor::RemoveLeftCommonFactor()
     int Union[200];
     int i = 0;
     int Index = 0;
-
-    SortGrammar();// 排序文法规则，确保相同左部的文法是相邻的
 
     for(int i = 0; i < NonterminalLatestID; i++)// 遍历每个非终结符号，设当前符号为Vni
     {
@@ -491,8 +483,8 @@ string GrammarProcessor::RemoveLeftCommonFactor()
             }
         }
 
-        cout << PrintGrammar() << "\n====\n";
-        cout.flush();
+//        cout << PrintGrammar() << "\n====\n";
+//        cout.flush();
     }
 
     SortGrammar();
@@ -502,30 +494,10 @@ string GrammarProcessor::RemoveLeftCommonFactor()
 
 string GrammarProcessor::RemoveLeftRecursion()
 {
-    OrganizeID2Word();
     SortGrammar();
 
-    // 构造这个表的条件是，必须确保先消除左公因子
-    //int MaxNonterminalID = NonterminalLatestID;
     for(int i = 0; i < NonterminalLatestID; i++) // 遍历每个非终结符号，设当前符号为Vni
     {
-//        list<Rule> ReadyToInsert;
-//        int count = 0;
-
-//        // 遍历以Vni为左部的文法,将以Vnj为左部的文法代入到形式为Vni -> Vnj β的文法中
-//        for(const Rule& grammar_i : Grammar)
-//            if(grammar_i.Left == i && IsNonterminal(grammar_i.Right[0]))
-//            {
-//                Rule TempRule;
-//                TempRule.Left = grammar_i.Left;//Vni
-//                for(const Rule& grammar_j : Grammar)//Vnj
-//                    if(grammar_j.Left == i)
-//                        TempRule.Right = grammar_j.Right;
-//                for(int j = 1; j < grammar_i.Right.size(); j++)//β
-//                    TempRule.Right.push_back(grammar_i.Right[j]);
-//                ReadyToInsert.push_back(TempRule);
-//            }
-
         // 如果Vni存在形式为A->AX的文法
         bool tag = false;
         for(Rule& grammar : Grammar)
@@ -566,9 +538,7 @@ string GrammarProcessor::RemoveLeftRecursion()
                     grammar.Right.push_back(NonterminalLatestID - 1); // 将A'追加到最右部
     }
 
-
-//    SimplifyGrammar();
-//    SortGrammar();
+    OrganizeID2Word();
 
     return PrintGrammar();
 }
