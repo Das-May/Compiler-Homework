@@ -15,11 +15,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    {
     QString FileName = "D:\\Homework\\Compiler-Homework\\build-Qt_Comprehensive_Exp2-Desktop_Qt_5_12_9_MinGW_32_bit-Debug\\a.txt";
     QByteArray fn_qba = FileName.toUtf8();
     char* fn_cc = fn_qba.data();
     char* c = Loader::ReadText(fn_cc);
-
     ui->TE_BNF->setText(QString(c));
     qDebug() << "=== Init ===\n";
     GrammarProcessorInstance = new GrammarProcessor(c);
@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
     qDebug() << "=== LL1 ===\n";
     SetLL1Table();
+    }
 
     connect(ui->Btn_ImportBNF,&QPushButton::clicked,[=](){
             QString FileName = QFileDialog::getOpenFileName(this,QStringLiteral("选取BNF文法"),"D:",QStringLiteral("文本文件(*.txt)"));
@@ -63,6 +64,13 @@ MainWindow::MainWindow(QWidget *parent)
         }
     );
 
+    {
+    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\SAMPLE1.TNY";
+    QByteArray fn_qba = FileName.toUtf8();
+    char* fn_cc = fn_qba.data();
+    char* c = Loader::ReadText(fn_cc);
+    ui->TE_Code->setText(QString(c));
+    }
     connect(ui->Btn_ImportCode,&QPushButton::clicked,[=](){
 
         }

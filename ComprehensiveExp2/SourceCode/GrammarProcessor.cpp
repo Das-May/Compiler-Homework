@@ -331,23 +331,28 @@ list<int> GrammarProcessor::GetFollow(int x)
 
     // ①当x是文法的开始符号，加入$
     if(x == 0)
+    {
         Follow.push_back(Word2ID("$"));
+        return Follow;
+    }
 
     for(Rule grammar : Grammar)
     {
+        if(x == 2)
+            int i = 0;
         // ②当x是最右部的时候，加入$，
         // ④当x是最右部的时候，follow（X）包含follow（A），注意A≠X
         if(x == grammar.Right[ grammar.Right.size() - 1 ])
         {
+            if(x == 2)
+                int i = 0;
             Follow.push_back(Word2ID("$"));
 
             if(grammar.Left != x)
                 for(int id : GetFollow(grammar.Left))
-                {
                     Follow.push_back(id);
-                    if(id == Word2ID("epslion"))
-                        int i = 0;
-                }
+
+            continue;
         }
 
         bool tag = false;
@@ -357,19 +362,25 @@ list<int> GrammarProcessor::GetFollow(int x)
                 tag = true;
             else if(tag == true)                // 此时已遍历到β
             {
+                if(x == 2)
+                    int i = 0;
                 // ③存在一个产生式A->αxβ形式，那么follow（x）包含first（β）-ε
-                for(int id1 : GetFirst(right))
+                list<int> first = GetFirst(right);
+                for(int id1 : first)
                 {
+                    //if(ID2Word[id1] != "epslion")
                     if(id1 != Word2ID("epslion"))
+                    {
+                        int iii = Word2ID("epslion");
+                        string sss = ID2Word[id1];
                         Follow.push_back(id1);
+                    }
 
                     // ④如果first（β）包含ε，说明X可能是最后一个字符，那么follow（X）包含follow（A）
-                    else if(id1 != x)
-                        for(int id2 : GetFollow(right))
+                    else if(grammar.Left != x)
+                        for(int id2 : GetFollow(grammar.Left))
                         {
                             Follow.push_back(id2);
-                            if(id2 == 100)
-                                int i = 0;
                         }
                 }
                 break;
@@ -377,31 +388,34 @@ list<int> GrammarProcessor::GetFollow(int x)
         }
     }
 
+    set<int> DuplicatedFollow;// 去重
+    for(int ID : Follow)
+        DuplicatedFollow.insert(ID);
+    Follow.clear();
+    for(int ID : DuplicatedFollow)
+        Follow.push_back(ID);
+
     return Follow;
 }
 
 string GrammarProcessor::GetFollow()
 {
     string Ret = "";
-    set<int> DuplicatedFollow;// 去重
-    OrganizeID2Word();
+
     for(int i = 0; i < NonterminalLatestID; i++)
     {
         Ret += "Follow(";
         Ret += ID2Word[i];
-        Ret += ")=\n{" ;
-        DuplicatedFollow.clear();
+        Ret += ")={" ;
         for(int ID : GetFollow(i))
-            DuplicatedFollow.insert(ID);
-
-        for(auto& ID : DuplicatedFollow)
         {
             Ret += ID2Word[ID];
             Ret += ", ";
         }
         Ret += "}\n";
 
-        cout << "Get Follow Set of '" << ID2Word[i] << "'\n";
+        cout << "Get Follow Set of '" << ID2Word[i] << "'\ni=" << to_string(i);
+        cout.flush();
     }
     return Ret;
 }
@@ -538,8 +552,6 @@ string GrammarProcessor::RemoveLeftRecursion()
                     grammar.Right.push_back(NonterminalLatestID - 1); // 将A'追加到最右部
     }
 
-    OrganizeID2Word();
-
     return PrintGrammar();
 }
 
@@ -602,11 +614,19 @@ vector<vector<int>> GrammarProcessor::GetLL1Table()
 
 string GrammarProcessor::PrintRule(const Rule& Rule)
 {
+//    string Ret;
+//    Ret = ID2Word[Rule.Left];
+//    Ret += " -> ";
+//    for(int RightID : Rule.Right)
+//        Ret += ID2Word[RightID] + " ";
+//    Ret += '\n';
+//    return Ret;
+
     string Ret;
-    Ret = ID2Word[Rule.Left];
+    Ret = to_string(Rule.Left);
     Ret += " -> ";
     for(int RightID : Rule.Right)
-        Ret += ID2Word[RightID] + " ";
+        Ret += to_string(RightID) + " ";
     Ret += '\n';
     return Ret;
 }
@@ -621,6 +641,9 @@ string GrammarProcessor::PrintGrammar()
 
 int GrammarProcessor::Word2ID(string TargetWord)
 {
+    if(TargetWord == "epslion")
+        return 100;
+
     for(auto & pair : ID2Word)
         if(pair.second == TargetWord)
             return pair.first;
