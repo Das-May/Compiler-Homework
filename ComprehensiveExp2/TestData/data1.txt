@@ -1,0 +1,11 @@
+S -> B e
+B -> C e
+B -> A f
+B -> e b
+B -> E
+A -> E
+A -> d e
+E -> e
+C -> C f
+G -> G
+D -> f

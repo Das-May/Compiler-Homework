@@ -1,0 +1,64 @@
+program -> definition-list
+definition-list -> definition-list definition
+definition-list -> definition
+definition -> variable-definition
+definition -> function-definition
+variable-definition -> type-indicator identifier ;
+variable-definition -> type-indicator identifier [ number ] ;
+type-indicator -> int
+type-indicator -> float
+type-indicator -> void
+function-definition -> type-indicator identifier ( parameters ) compound-stmt
+parameters -> parameter-list
+parameters -> void
+parameter-list -> parameter-list , parameter
+parameter-list -> parameter
+parameter -> type-indicator identifier
+parameter -> type-indicator identifier [ ]
+compound-stmt -> { local-definitions statement-list }
+local-definitions -> local-definitions variable-definition
+local-definitions -> epslion
+statement-list -> statement-list statement
+statement-list -> epslion
+statement -> expression-stmt
+statement -> compound-stmt
+statement -> condition-stmt
+statement -> dowhile-stmt
+statement -> return-stmt
+expression-stmt -> expression ;
+expression-stmt -> ;
+condition-stmt -> if ( expression ) statement
+condition-stmt -> if ( expression ) statement else statement
+dowhile-stmt ->do statement while ( expression ) ;
+return-stmt -> return ;
+return-stmt -> return expression ;
+expression -> variable = expression
+expression -> simple-expression
+variable -> identifier
+variable -> identifier [ expression ]
+simple-expression ->additive-expression relop additive-expression
+simple-expression -> additive-expression
+relop -> <=
+relop -> <
+relop -> >
+relop -> >=
+relop -> ==
+relop -> !=
+additive-expression -> additive-expression addop term
+additive-expression -> term
+addop -> +
+addop -> -
+term -> term mulop factor
+term -> factor
+mulop -> *
+mulop -> /
+mulop -> %
+factor -> ( expression )
+factor -> variable
+factor -> call
+factor -> number
+call -> ID ( arguments )
+arguments -> argument-list
+arguments -> epslion
+argument-list -> argument-list , expression
+argument-list -> expression

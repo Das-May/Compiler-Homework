@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     GrammarAnalyst.cpp \
     GrammarProcessor.cpp \
+    GrammarUtilities.cpp \
     Loader.cpp \
     main.cpp \
     mainwindow.cpp
@@ -25,6 +26,7 @@ SOURCES += \
 HEADERS += \
     GrammarAnalyst.h \
     GrammarProcessor.h \
+    GrammarUtilities.h \
     Loader.h \
     mainwindow.h
 

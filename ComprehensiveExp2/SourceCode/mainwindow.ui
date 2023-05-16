@@ -104,7 +104,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -303,7 +303,32 @@
             <widget class="QWidget" name="widget_12" native="true">
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <item>
-               <widget class="QTextEdit" name="TE_SyntaxTree"/>
+               <widget class="QLabel" name="Lable_Tip">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>提示：</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QTreeWidget" name="TreeWidget_GrammarTree">
+                <property name="autoExpandDelay">
+                 <number>-1</number>
+                </property>
+                <property name="headerHidden">
+                 <bool>true</bool>
+                </property>
+                <column>
+                 <property name="text">
+                  <string notr="true">1</string>
+                 </property>
+                </column>
+               </widget>
               </item>
               <item>
                <widget class="QLabel" name="label_9">

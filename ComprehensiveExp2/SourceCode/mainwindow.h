@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTreeWidget>
 
 #include "GrammarProcessor.h"
+#include "GrammarAnalyst.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,9 +23,10 @@ private:
     Ui::MainWindow *ui;
 
     GrammarProcessor *GrammarProcessorInstance;
+    GrammarAnalyst GrammarAnalystInstance;
 
     void SetLL1Table();
-    void GetGrammarTree();
+    QTreeWidgetItem* GetGrammarTree(TreeNode* root);
 
 };
 #endif // MAINWINDOW_H

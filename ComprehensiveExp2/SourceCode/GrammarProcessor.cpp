@@ -1,4 +1,5 @@
 #include "GrammarProcessor.h"
+#include "GrammarUtilities.h"
 
 #include <algorithm>
 #include <set>
@@ -11,9 +12,12 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
     int LatestID = 0;
     while(*GrammarBuffer != 0 && *GrammarBuffer != '\n')
     {
+        while(GrammarUtil::IsSpace(*GrammarBuffer))
+            GrammarBuffer++;
+
         // 读取左部
         TempWord = "";
-        while(*GrammarBuffer != ' ')
+        while(!GrammarUtil::IsSpace(*GrammarBuffer))
         {
             TempWord += *GrammarBuffer;
             GrammarBuffer++;
@@ -29,15 +33,14 @@ GrammarProcessor::GrammarProcessor(char *GrammarBuffer)
             TempRule.Left = ID;
 
         // 跳过->
-        bool end = false;
-        while(*GrammarBuffer == ' ' || *GrammarBuffer == '-' || *GrammarBuffer == '>')
-        {
-            if(*GrammarBuffer == '>')
-                end = true;
-            else if(end && (*GrammarBuffer == '-' || *GrammarBuffer == '>'))//防止吞并文法符号，例如-，--，-=,>,>=
-                break;
+        while(GrammarUtil::IsSpace(*GrammarBuffer))
             GrammarBuffer++;
-        }
+        if(GrammarBuffer[0]=='-' && GrammarBuffer[1]=='>')
+            GrammarBuffer += 2;
+        else
+            return;
+        while(GrammarUtil::IsSpace(*GrammarBuffer))
+            GrammarBuffer++;
 
         // 读取右部
         TempRule.Right.clear();
@@ -424,14 +427,12 @@ string GrammarProcessor::GetFollow()
 string GrammarProcessor::RemoveLeftCommonFactor()
 {
     list<list<Rule>::iterator> SameLeftRules;
-    // 如果Union[i]==0
     int Union[200];
-    int i = 0;
     int Index = 0;
 
     for(int i = 0; i < NonterminalLatestID; i++)// 遍历每个非终结符号，设当前符号为Vni
     {
-        SameLeftRules.clear();
+        SameLeftRules.clear();// 将左部为Vni的文法收纳到一起
         for(list<Rule>::iterator it = Grammar.begin(); it!=Grammar.end(); it++)
             if((*it).Left == i)
                 SameLeftRules.push_back(it);
@@ -498,7 +499,8 @@ string GrammarProcessor::RemoveLeftCommonFactor()
         }
 
 //        cout << PrintGrammar() << "\n====\n";
-//        cout.flush();
+        cout << "Finish, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
+        cout.flush();
     }
 
     SortGrammar();

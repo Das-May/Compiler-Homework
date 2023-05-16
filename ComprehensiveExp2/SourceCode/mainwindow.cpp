@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     {
-    QString FileName = "D:\\Homework\\Compiler-Homework\\build-Qt_Comprehensive_Exp2-Desktop_Qt_5_12_9_MinGW_32_bit-Debug\\a.txt";
+    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\C++.txt";
     QByteArray fn_qba = FileName.toUtf8();
     char* fn_cc = fn_qba.data();
     char* c = Loader::ReadText(fn_cc);
@@ -31,10 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
     qDebug() << "=== GetFirst ===\n";
     ui->TE_FirstSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFirst()));
-    qDebug() << "=== GetFollow ===\n";
-    ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
-    qDebug() << "=== LL1 ===\n";
-    SetLL1Table();
+//    qDebug() << "=== GetFollow ===\n";
+//    ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
+//    qDebug() << "=== LL1 ===\n";
+//    SetLL1Table();
     }
 
     connect(ui->Btn_ImportBNF,&QPushButton::clicked,[=](){
@@ -64,13 +64,16 @@ MainWindow::MainWindow(QWidget *parent)
         }
     );
 
-    {
-    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\SAMPLE1.TNY";
-    QByteArray fn_qba = FileName.toUtf8();
-    char* fn_cc = fn_qba.data();
-    char* c = Loader::ReadText(fn_cc);
-    ui->TE_Code->setText(QString(c));
-    }
+//    {
+//    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\SAMPLE1.TNY";
+//    QByteArray fn_qba = FileName.toUtf8();
+//    char* fn_cc = fn_qba.data();
+//    char* c = Loader::ReadText(fn_cc);
+//    ui->TE_Code->setText(QString(c));
+//    ui->Lable_Tip->setText(QString::fromStdString(GrammarAnalystInstance.Execute(c)));
+//    ui->TreeWidget_GrammarTree->addTopLevelItem(GetGrammarTree(GrammarAnalystInstance.GetRoot()));
+//    ui->TreeWidget_GrammarTree->expandAll();
+//    }
     connect(ui->Btn_ImportCode,&QPushButton::clicked,[=](){
 
         }
@@ -81,6 +84,7 @@ void MainWindow::SetLL1Table()
 {
     vector<vector<int>> LL1Table = GrammarProcessorInstance->GetLL1Table();
     map<int, string> ID2Word = GrammarProcessorInstance->GetID2Word();
+    GrammarAnalystInstance.Init(LL1Table, ID2Word);
 
     int row = LL1Table[0][0];
     int col = LL1Table[0][1];
@@ -107,9 +111,14 @@ void MainWindow::SetLL1Table()
     }
 }
 
-void MainWindow::GetGrammarTree()
+QTreeWidgetItem* MainWindow::GetGrammarTree(TreeNode* root)
 {
-
+    QTreeWidgetItem* item = new QTreeWidgetItem;
+    item->setText(0,QString::fromStdString(root->Symbol));
+    for(auto node : root->Child)
+        if(node != nullptr)
+            item->addChild(GetGrammarTree(node));
+    return item;
 }
 
 MainWindow::~MainWindow()
