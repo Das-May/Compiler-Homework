@@ -124,8 +124,6 @@ void GrammarProcessor::OrganizeID2Word()
         for(int& Right : grammar.Right)
             Right = UpdateID[Right];
     }
-
-    int i  = 0;
 }
 
 #pragma region "消除有害规则"{
@@ -258,34 +256,15 @@ string GrammarProcessor::SimplifyGrammar()
 #pragma region "GetFirst(x)"{
 void GrammarProcessor::GetFirst_sub(int x)
 {
-    bool tag = false;
-    for(auto& g : Grammar)
-    {
-        if(g.Left == x)    // 遍历以X为左部的每个文法
+    for(const Rule& grammar : Grammar)
+        if(grammar.Left == x)
         {
-            tag = true;
-            int a = g.Right[0]; // 取文法右部第一个字符假设为a
-            if( IsTerminal(a) )     // 若a是终结符或ε
-            {
-                bool repeat = false;
-                for(list<int>::iterator it = first.begin(); it != first.end(); it++)
-                {
-                    if((*it) == a)
-                    {
-                        repeat = true;
-                        break;
-                    }
-                }
-                if(repeat == false)
+            int a = grammar.Right[0];
+            if( IsTerminal(a) && find(first.begin(), first.end(), a)==first.end())
                     first.push_back(a);
-            }
-            else if(a>0 && a!=x)    // 若为非终结符 并且不是本身（避免进入死循环）
-                GetFirst_sub(a);    // 则递归进入GetFirst(int a)
-
+            else if(a>0 && a!=x)//要求a!=x，避免死循环
+                GetFirst_sub(a);
         }
-        else if(tag == true) //（剪枝操作）
-            break;
-    }
 }
 
 list<int>& GrammarProcessor::GetFirst(int x)
@@ -295,6 +274,10 @@ list<int>& GrammarProcessor::GetFirst(int x)
         GetFirst_sub(x);
     else
         first.push_back(x);
+
+    cout << "Get first Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
+    cout.flush();
+
     return first;
 }
 
@@ -330,6 +313,9 @@ string GrammarProcessor::GetFirst()
 #pragma region "GetFollow(x)"{
 list<int> GrammarProcessor::GetFollow(int x)
 {
+    cout << "Getting Follow Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
+    cout.flush();
+
     list<int> Follow;
 
     // ①当x是文法的开始符号，加入$
@@ -341,14 +327,12 @@ list<int> GrammarProcessor::GetFollow(int x)
 
     for(Rule grammar : Grammar)
     {
-        if(x == 2)
+        if(x == 12)
             int i = 0;
         // ②当x是最右部的时候，加入$，
         // ④当x是最右部的时候，follow（X）包含follow（A），注意A≠X
         if(x == grammar.Right[ grammar.Right.size() - 1 ])
         {
-            if(x == 2)
-                int i = 0;
             Follow.push_back(Word2ID("$"));
 
             if(grammar.Left != x)
@@ -365,26 +349,25 @@ list<int> GrammarProcessor::GetFollow(int x)
                 tag = true;
             else if(tag == true)                // 此时已遍历到β
             {
-                if(x == 2)
-                    int i = 0;
                 // ③存在一个产生式A->αxβ形式，那么follow（x）包含first（β）-ε
                 list<int> first = GetFirst(right);
                 for(int id1 : first)
                 {
-                    //if(ID2Word[id1] != "epslion")
                     if(id1 != Word2ID("epslion"))
                     {
-                        int iii = Word2ID("epslion");
                         string sss = ID2Word[id1];
                         Follow.push_back(id1);
                     }
 
                     // ④如果first（β）包含ε，说明X可能是最后一个字符，那么follow（X）包含follow（A）
-                    else if(grammar.Left != x)
-                        for(int id2 : GetFollow(grammar.Left))
-                        {
+                    else if(grammar.Left != x)//避免死循环
+                    {
+                        if(x == 9)
+                            int i = 0;
+                        list<int> follow = GetFollow(grammar.Left);
+                        for(int id2 : follow)
                             Follow.push_back(id2);
-                        }
+                    }
                 }
                 break;
             }
@@ -417,7 +400,7 @@ string GrammarProcessor::GetFollow()
         }
         Ret += "}\n";
 
-        cout << "Get Follow Set of '" << ID2Word[i] << "'\ni=" << to_string(i);
+        cout << "===Finish get follow set of '" << ID2Word[i] << "'\ti=" << to_string(i) << "===\n\n";
         cout.flush();
     }
     return Ret;
@@ -498,8 +481,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
             }
         }
 
-//        cout << PrintGrammar() << "\n====\n";
-        cout << "Finish, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
+        cout << "Finish remove left common factor, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
         cout.flush();
     }
 
@@ -514,15 +496,26 @@ string GrammarProcessor::RemoveLeftRecursion()
 
     for(int i = 0; i < NonterminalLatestID; i++) // 遍历每个非终结符号，设当前符号为Vni
     {
-        // 如果Vni存在形式为A->AX的文法
-        bool tag = false;
+        if(FindLeftRecur(i, i).size() == 0)
+            continue;
+
+        bool existLR = false;
+        vector<int> rights;
         for(Rule& grammar : Grammar)
         {
-            if(grammar.Left == i && grammar.Right[0] == i)
+            if(grammar.Left == i && IsNonterminal(grammar.Right[0]))// 寻找所有的直接或间接左递归
             {
-                if(tag == false)
+                rights = FindLeftRecur(i, grammar.Right[0]);
+                if(rights.size() == 0)// 若不存在左递归，结束对该文法的处理
+                    continue;
+
+                // 若存在左递归，则代入
+                grammar.Right = rights;
+
+                // 消除左递归
+                if(existLR == false)
                 {
-                    tag = true;
+                    existLR = true;
 
                     // 新增非终结符A'
                     AddNonterminal(ID2Word[grammar.Left]);
@@ -548,13 +541,36 @@ string GrammarProcessor::RemoveLeftRecursion()
             }
         }
 
-        if(tag == true)
+        if(existLR == true)
             for(Rule& grammar : Grammar) // 遍历所有以Vni为左部的文法
                 if(grammar.Left == i)
                     grammar.Right.push_back(NonterminalLatestID - 1); // 将A'追加到最右部
+
+        cout << "Finish remove left recursion, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
+        cout.flush();
     }
 
     return PrintGrammar();
+}
+
+vector<int> GrammarProcessor::FindLeftRecur(int TargetLeft, int CurrentLeft)
+{
+    for(const Rule& grammar : Grammar)
+        if(grammar.Left == CurrentLeft)
+        {
+            if(grammar.Right[0] == TargetLeft)// 直接左递归
+                return grammar.Right;
+            else if(IsNonterminal(grammar.Right[0]) && grammar.Left!= grammar.Right[0])// 剪枝，并且避免死循环
+            {
+                vector<int> rights = FindLeftRecur(TargetLeft, grammar.Right[0]);
+                if(rights.size() != 0)
+                {
+                    rights.insert(rights.end(), grammar.Right.begin()+1, grammar.Right.end());// 间接左递归
+                    return rights;
+                }
+            }
+        }
+    return {};
 }
 
 vector<vector<int>> GrammarProcessor::GetLL1Table()
@@ -616,21 +632,21 @@ vector<vector<int>> GrammarProcessor::GetLL1Table()
 
 string GrammarProcessor::PrintRule(const Rule& Rule)
 {
-//    string Ret;
-//    Ret = ID2Word[Rule.Left];
-//    Ret += " -> ";
-//    for(int RightID : Rule.Right)
-//        Ret += ID2Word[RightID] + " ";
-//    Ret += '\n';
-//    return Ret;
-
     string Ret;
-    Ret = to_string(Rule.Left);
+    Ret = ID2Word[Rule.Left];
     Ret += " -> ";
     for(int RightID : Rule.Right)
-        Ret += to_string(RightID) + " ";
+        Ret += ID2Word[RightID] + " ";
     Ret += '\n';
     return Ret;
+
+//    string Ret;
+//    Ret = to_string(Rule.Left);
+//    Ret += " -> ";
+//    for(int RightID : Rule.Right)
+//        Ret += to_string(RightID) + " ";
+//    Ret += '\n';
+//    return Ret;
 }
 
 string GrammarProcessor::PrintGrammar()

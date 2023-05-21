@@ -91,6 +91,14 @@ private:
     bool RemoveUnterminableRules_sub(int NonterminalID, int depth);
     void RemoveUnterminableRules();
 
+    /**
+     * @brief Find left Recursion(LR) by using DFS, the LR may be direct or indirect
+     * @param ID of target Left nonterminal
+     * @param ID of current symbol, may be nonterminal or terminal
+     * @return if exist LR, for example, A -> Aabcde, return abcde.
+     */
+    vector<int> FindLeftRecur(int TargetLeft, int CurrentLeft);
+
     void GetFirst_sub(int x);
     list<int>& GetFirst(int x);
 

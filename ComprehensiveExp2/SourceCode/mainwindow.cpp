@@ -31,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
     qDebug() << "=== GetFirst ===\n";
     ui->TE_FirstSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFirst()));
-//    qDebug() << "=== GetFollow ===\n";
-//    ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
+    qDebug() << "=== GetFollow ===\n";
+    ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
 //    qDebug() << "=== LL1 ===\n";
 //    SetLL1Table();
     }
