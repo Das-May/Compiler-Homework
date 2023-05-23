@@ -4,13 +4,21 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <cstring>
+#include <string>
 
 using namespace std;
 
 struct Rule{
     int Left;
     vector<int> Right;
+
+    Rule(){}
+    Rule(int left, vector<int> right)
+    {
+        Left = left;
+        Right = right;
+    }
+
     bool operator == (const Rule& a) const{
         if(Left == a.Left && Right == a.Right)
             return true;
@@ -91,9 +99,12 @@ private:
     bool RemoveUnterminableRules_sub(int NonterminalID, int depth);
     void RemoveUnterminableRules();
 
+    vector<list<Rule>::iterator> FindSameLeftRules(int Left);
+    list<int> FindPossibleLCF(int ID, list<int> First);
+
     /**
      * @brief Find left Recursion(LR) by using DFS, the LR may be direct or indirect
-     * @param ID of target Left nonterminal
+     * @param ID of target left of a grammar
      * @param ID of current symbol, may be nonterminal or terminal
      * @return if exist LR, for example, A -> Aabcde, return abcde.
      */

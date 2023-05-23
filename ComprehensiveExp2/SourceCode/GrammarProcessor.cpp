@@ -97,9 +97,9 @@ void GrammarProcessor::OrganizeID2Word()
         {
             IsNonTerminal[grammar.Left] = true;
 
+            NonterminalLatestID++;
             TempID2Word[NonterminalLatestID] = ID2Word[grammar.Left];
             UpdateID[grammar.Left] = NonterminalLatestID;
-            NonterminalLatestID++;
         }
     }
 
@@ -146,23 +146,36 @@ void GrammarProcessor::RemoveUnreachableRules()
 {
     bool Reachable[200];
     memset(Reachable, 0, sizeof(Reachable));
-    Reachable[0] = true; // 将左部开始符号放入集合中
-    for(Rule grammar : Grammar)
-        if(Reachable[grammar.Left] == true) // 若左部在集合中
-            for(auto& right : grammar.Right)
-                if(IsNonterminal(right)) // 对于右部的每个非终结符号
+    Reachable[0] = true; // 将开始符号放入集合中
+
+    bool flag = true;
+    while(flag)
+    { 
+        flag = false;
+        for (Rule grammar : Grammar)
+        {
+            if (!Reachable[grammar.Left])
+                continue;
+
+            for (int right : grammar.Right)
+            {
+                if(IsNonterminal(right) && Reachable[right] == false)
+                {
                     Reachable[right] = true; // 放入“可到达集合”中
+                    flag = true;
+                }
+            }
+        }           
+    }
 
     list<Rule>::iterator it = Grammar.begin();
-    int size = Grammar.size();
-    for(int i = 0; i < size; i++, it++)
+    for (int i = 0; i < Grammar.size(); i++)
     {
-        if(Reachable[(*it).Left] == false)
-        {
+        if (Reachable[(*it).Left] == false)
             it = Grammar.erase(it); // 删除不可达的文法规则
-            it--;
-        }
-    }
+        else
+            it++;
+    }    
 }
 
 bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
@@ -211,32 +224,22 @@ void GrammarProcessor::RemoveUnterminableRules()
 {
     memset(TempSet, -1, sizeof(TempSet)); // 意为Unterminable，是否可终止
     RemoveUnterminableRules_sub(0, 0);
-    for(int ID = 0; ID < NonterminalLatestID; ID++)
+    for(int ID = 0; ID <= NonterminalLatestID; ID++)
     {
         if(TempSet[ID] == 0)    // 如果该字符A被判为不可终止
         {
             list<Rule>::iterator it = Grammar.begin();
-            int size = Grammar.size();
-            for(int j = 0; j < size; j++, it++) // 遍历所有文法
+            for(int j = 0; j < Grammar.size(); j++) // 遍历所有文法
             {
-                cout << "(*it).left" << (*it).Left << endl;
-                if((*it).Left == ID)         // 左部含有该字符A
+                // 左部或右部含有该字符A,删除该不可终止的文法规则
+                if((*it).Left == ID ||
+                    find((*it).Right.begin(), (*it).Right.end(), ID) != (*it).Right.end())
                 {
-                    it = Grammar.erase(it);// 删除该不可终止的文法规则
-                    it--;
+                    it = Grammar.erase(it);
+                    continue;
                 }
-                else
-                {
-                    for(int RightID : (*it).Right)
-                    {
-                        if(RightID == ID)  // 右部含有该字符A
-                        {
-                            it = Grammar.erase(it);// 删除该不可终止的文法规则
-                            it--;
-                            break;
-                        }
-                    }
-                }
+
+                it++;
             }
         }
     }
@@ -274,8 +277,9 @@ list<int>& GrammarProcessor::GetFirst(int x)
         GetFirst_sub(x);
     else
         first.push_back(x);
+    first.sort();
 
-    cout << "Get first Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
+    cout << "GetFirst: log: Get first Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
     cout.flush();
 
     return first;
@@ -285,7 +289,7 @@ string GrammarProcessor::GetFirst()
 {
     string allFirst = "";
     vector<int> temp_vector;
-    for(int i = 0; i < NonterminalLatestID; i++)
+    for(int i = 0; i <= NonterminalLatestID; i++)
     {
         if(ID2Word.find(i) != ID2Word.end())
         {
@@ -313,7 +317,11 @@ string GrammarProcessor::GetFirst()
 #pragma region "GetFollow(x)"{
 list<int> GrammarProcessor::GetFollow(int x)
 {
-    cout << "Getting Follow Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
+    if(TempSet[x]!=0)// 避免死递归
+        return {};
+
+    TempSet[x] = 1;
+    cout << "GetFollow: log: Getting Follow Set of " << to_string(x) << " " <<  ID2Word[x] << '\n';
     cout.flush();
 
     list<int> Follow;
@@ -388,11 +396,12 @@ string GrammarProcessor::GetFollow()
 {
     string Ret = "";
 
-    for(int i = 0; i < NonterminalLatestID; i++)
+    for(int i = 0; i <= NonterminalLatestID; i++)
     {
         Ret += "Follow(";
         Ret += ID2Word[i];
         Ret += ")={" ;
+        memset(TempSet, 0, sizeof(TempSet));
         for(int ID : GetFollow(i))
         {
             Ret += ID2Word[ID];
@@ -400,7 +409,7 @@ string GrammarProcessor::GetFollow()
         }
         Ret += "}\n";
 
-        cout << "===Finish get follow set of '" << ID2Word[i] << "'\ti=" << to_string(i) << "===\n\n";
+        cout << "GetFollow: log: ===Finish get follow set of '" << ID2Word[i] << "'\ti=" << to_string(i) << "===\n\n";
         cout.flush();
     }
     return Ret;
@@ -409,147 +418,232 @@ string GrammarProcessor::GetFollow()
 
 string GrammarProcessor::RemoveLeftCommonFactor()
 {
-    list<list<Rule>::iterator> SameLeftRules;
-    int Union[200];
-    int Index = 0;
-
-    for(int i = 0; i < NonterminalLatestID; i++)// 遍历每个非终结符号，设当前符号为Vni
+    for(int nonterm = 0; nonterm <= NonterminalLatestID; nonterm++)// 遍历每个非终结符号，设当前符号为Vni
     {
-        SameLeftRules.clear();// 将左部为Vni的文法收纳到一起
-        for(list<Rule>::iterator it = Grammar.begin(); it!=Grammar.end(); it++)
-            if((*it).Left == i)
-                SameLeftRules.push_back(it);
+        // 将左部为Vni的文法收纳到一起
+        vector<list<Rule>::iterator> SameLeftRules = FindSameLeftRules(nonterm);
+        if(SameLeftRules.size() <= 1)
+            continue;
 
-        if(SameLeftRules.size() != 1) // 若个数≠1
+        // 遍历以Vni为左部的文法，找寻左公因子
+        int ExistLCF = false;
+        int Union[200];
+        memset(Union, -1, sizeof (Union) );//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引
+        vector<list<int>> FirstContainer;
+        for(int Index = 0; Index < SameLeftRules.size(); Index++ )
         {
-            map<int, int> RightFirst2Index;
-            memset(Union, 0, sizeof (Union) );
-            Index = 1;// !!!
-            int tag = false;
+            GetFirst(SameLeftRules[Index]->Right[0]);// first是一个成员变量
+            FirstContainer.push_back(first);
 
-            for(auto & rule : SameLeftRules ) // 遍历以Vni为左部的文法
+            list<int> inters;
+            for(int parent = 0; parent < FirstContainer.size() - 1; parent++)
             {
-                int First = (*rule).Right[0];// 取左因子
-
-                if(RightFirst2Index.find(First) == RightFirst2Index.end()) // 若字典未记录
-                    RightFirst2Index[First] = Index;
-                else // 若字典已有某个集合
+                set_intersection(FirstContainer[parent].begin(), FirstContainer[parent].end(), first.begin(), first.end(), inserter(inters, inters.begin()));
+                if(inters.size()!=0)//存在左公因子
                 {
-                    tag = true; //标记存在Union[m]≠0
-                    Union[Index] = RightFirst2Index[First]; // 则Union[m1]=n
-                    Union[RightFirst2Index[First]] = -1;
+                    ExistLCF = true;
+                    Union[Index] = parent; // 并查集记录
+                    Union[Union[Index]] = -2;
+                    break;
                 }
-                Index++;
             }
+            if(!ExistLCF)
+                continue;
 
-            if(tag != 0) // 存在union[m]≠0
+            // 左因子相同，暂不需要处理
+            auto& one = SameLeftRules[Union[Index]]->Right;
+            auto& other = SameLeftRules[Index]->Right;
+            if(one[0] == other[0])
+                continue;
+
+            // 提取间接左公因子CommonID，它可能是非终结符，也可能是终结符
+            // 例1，A->B,A->C,B->ab,C->ac,此处CommonID = a
+            // 例2，A->B,A->C,B->Zb,C->DE,D->Zd,Z->...,此处CommonID = Z
+            int CommonID = -1;
+            for(int id1 : FindPossibleLCF(one[0], inters))
             {
-                list<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
-                Rule TempRule;
-                for(int k = 1; k < Index, it2 != SameLeftRules.end(); k++, it2++)
-                {
-                    if(Union[k] == -1)
-                    {
-                        Union[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
-                        AddNonterminal(ID2Word[(*it2)->Left]);// 分配新非终结符字符C
-
-                        int a = (*it2)->Right[0];
-                        (*it2)->Right.erase((*it2)->Right.begin());
-
-                        // 新增文法C->B
-                        TempRule.Left = Union[k];
-                        if((*it2)->Right.size() == 0)
-                            TempRule.Right.push_back(Word2ID("epslion")); // epslion（ε）
-                        else
-                            TempRule.Right = (*it2)->Right;
-                        Grammar.push_back(TempRule);
-                        // 把文法文法A->aB改为文法A->aC
-                        (*it2)->Right.clear();
-                        (*it2)->Right.push_back(a);
-                        (*it2)->Right.push_back(Union[k]);
-
+                for(int id2 : FindPossibleLCF(other[0], inters))
+                    if(id1 == id2){
+                        CommonID = id1;
+                        break;
                     }
-                    else if(Union[k] != 0)
+                if(CommonID != -1)
+                    break;
+            }
+            for(int i = 0; i < 2; i++)
+            {
+                auto& temp = i ? one : other;
+
+                if(temp[0] == CommonID)
+                    continue;
+
+                // 改写A -> B为A -> CommonID B'
+                int LeftFactor = temp[0];           // B
+                AddNonterminal(ID2Word[LeftFactor]);// B'
+                temp[0] = NonterminalLatestID;
+                temp.insert(temp.begin(), CommonID);// A -> CommonID B'
+
+                // 并沿途新增文法B’->b（例1），或者C'->D'E,D'->d（例2）
+                while(LeftFactor != -1)
+                    for(Rule& grammar : Grammar)
                     {
-                        // 将文法A->aB修改为文法C->B
-                        (*it2)->Right.erase((*it2)->Right.begin());//移除a
-                        if((*it2)->Right.size() == 0)
-                            (*it2)->Right.push_back(Word2ID("epslion"));//epslion
-                        (*it2)->Left = Union[Union[k]];// 把A改成C
+                        if(grammar.Left != LeftFactor)
+                            continue;
+
+                        GetFirst(grammar.Right[0]);
+                        if(first != FirstContainer[Index])
+                            continue;
+
+                        if(grammar.Right[0] == CommonID)//B->ab
+                        {
+                            Rule rule(NonterminalLatestID, grammar.Right);
+                            rule.Right.erase(rule.Right.begin());
+                            if(rule.Right.size()==0)
+                                rule.Right.push_back(100);
+                            Grammar.push_back(rule);
+
+                            LeftFactor = -1;
+                        }
+                        else//C->DE
+                        {
+                            Rule rule(NonterminalLatestID, grammar.Right);
+                            AddNonterminal(ID2Word[grammar.Right[0]]);//D'
+                            rule.Right[0] = NonterminalLatestID;
+                            Grammar.push_back(rule);
+
+                            LeftFactor = grammar.Right[0];
+                        }
+                        break;
                     }
-                }
+            }
+        }
+        if(!ExistLCF)
+            continue;
+
+        // 消除直接左公因子
+        vector<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
+        for(int k = 1; k < SameLeftRules.size(), it2 != SameLeftRules.end(); k++, it2++)
+        {
+            if(Union[k] == -2)
+            {
+                Union[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
+                AddNonterminal(ID2Word[(*it2)->Left]);// 分配新非终结符字符C
+
+                int a = (*it2)->Right[0];
+                (*it2)->Right.erase((*it2)->Right.begin());
+
+                // 新增文法C->B
+                Rule rule(Union[k], (*it2)->Right);
+                if(rule.Right.size() == 0)
+                    rule.Right.push_back(Word2ID("epslion")); // epslion（ε）
+                Grammar.push_back(rule);
+                // 把文法文法A->aB改为文法A->aC
+                (*it2)->Right.clear();
+                (*it2)->Right.push_back(a);
+                (*it2)->Right.push_back(Union[k]);
+
+            }
+            else if(Union[k] != -1)
+            {
+                // 将文法A->aB修改为文法C->B
+                (*it2)->Right.erase((*it2)->Right.begin());//移除a
+                if((*it2)->Right.size() == 0)
+                    (*it2)->Right.push_back(Word2ID("epslion"));//epslion
+                (*it2)->Left = Union[Union[k]];// 把A改成C
             }
         }
 
-        cout << "Finish remove left common factor, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
+        cout << "RemoveLeftCommonFactor: log: Finish remove left common factor, id=" << to_string(nonterm) << ", word=" << ID2Word[nonterm] << "\n";
         cout.flush();
     }
 
-    SortGrammar();
+//    SortGrammar();
 
     return PrintGrammar();
 }
 
-string GrammarProcessor::RemoveLeftRecursion()
+list<int> GrammarProcessor::FindPossibleLCF(int ID, list<int> FirstInters)
 {
-    SortGrammar();
+    if(ID >= 100)
+        return {ID};
 
-    for(int i = 0; i < NonterminalLatestID; i++) // 遍历每个非终结符号，设当前符号为Vni
+    list<int> Ret = {};
+    for(const Rule& grammar : Grammar)
     {
-        if(FindLeftRecur(i, i).size() == 0)
+        if(grammar.Left != ID || grammar.Left == grammar.Right[0])
             continue;
 
+        GetFirst(grammar.Right[0]);
+        if(!includes(first.begin(), first.end(), FirstInters.begin(), FirstInters.end()))
+            continue;
+
+        Ret.push_back(grammar.Right[0]);
+
+        if(first == FirstInters)
+            return Ret;
+
+        list<int> temp = FindPossibleLCF(grammar.Right[0], FirstInters);
+        Ret.insert(Ret.end(), temp.begin(), temp.end());
+    }
+    return Ret;
+}
+
+string GrammarProcessor::RemoveLeftRecursion()
+{
+    // 遍历每个非终结符号，设当前符号为Vni
+    for(int i = 0; i <= NonterminalLatestID; i++) 
+    {
         bool existLR = false;
-        vector<int> rights;
         for(Rule& grammar : Grammar)
         {
-            if(grammar.Left == i && IsNonterminal(grammar.Right[0]))// 寻找所有的直接或间接左递归
+            if (grammar.Left != i || !IsNonterminal(grammar.Right[0]))
+                continue;
+
+            // 寻找所有的直接或间接左递归
+            vector<int> rights = FindLeftRecur(i, grammar.Right[0]);
+            if(rights.size() == 0)
+                continue;
+
+            // 消除左递归
+            grammar.Right = rights;// 若存在左递归，则代入
+            if(existLR == false)
             {
-                rights = FindLeftRecur(i, grammar.Right[0]);
-                if(rights.size() == 0)// 若不存在左递归，结束对该文法的处理
-                    continue;
+                existLR = true;
 
-                // 若存在左递归，则代入
-                grammar.Right = rights;
+                // 新增非终结符A'
+                AddNonterminal(ID2Word[grammar.Left]);
 
-                // 消除左递归
-                if(existLR == false)
-                {
-                    existLR = true;
+                // 将文法A->AX修改为文法A'->XA'
+                grammar.Left = NonterminalLatestID;
+                grammar.Right.erase(grammar.Right.begin());
+                grammar.Right.push_back(NonterminalLatestID);
 
-                    // 新增非终结符A'
-                    AddNonterminal(ID2Word[grammar.Left]);
-
-                    // 将文法A->AX修改为文法A'->XA'
-                    grammar.Left = NonterminalLatestID - 1;
-                    grammar.Right.erase(grammar.Right.begin());
-                    grammar.Right.push_back(NonterminalLatestID - 1);
-
-                    // 新增文法A'->ε
-                    Rule temp_rule;
-                    temp_rule.Left = NonterminalLatestID - 1;
-                    temp_rule.Right.push_back(Word2ID("epslion"));
-                    Grammar.push_back(temp_rule);
-                }
-                else
-                {
-                    // 将文法A->AX修改为文法A'->XA'
-                    grammar.Left = NonterminalLatestID - 1;
-                    grammar.Right.erase(grammar.Right.begin());
-                    grammar.Right.push_back(NonterminalLatestID - 1);
-                }
+                // 新增文法A'->ε
+                Rule temp_rule;
+                temp_rule.Left = NonterminalLatestID;
+                temp_rule.Right.push_back(Word2ID("epslion"));
+                Grammar.push_back(temp_rule);
+            }
+            else
+            {
+                // 将文法A->AX修改为文法A'->XA'
+                grammar.Left = NonterminalLatestID;
+                grammar.Right.erase(grammar.Right.begin());
+                grammar.Right.push_back(NonterminalLatestID);
             }
         }
 
-        if(existLR == true)
-            for(Rule& grammar : Grammar) // 遍历所有以Vni为左部的文法
-                if(grammar.Left == i)
-                    grammar.Right.push_back(NonterminalLatestID - 1); // 将A'追加到最右部
+        if (existLR == false)
+            continue;
 
-        cout << "Finish remove left recursion, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
+        for(Rule& grammar : Grammar) // 遍历所有以Vni为左部的文法
+            if(grammar.Left == i)
+                grammar.Right.push_back(NonterminalLatestID); // 将A'追加到最右部
+        cout << "RemoveLeftRecursion: log: Finish remove left recursion, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
         cout.flush();
     }
 
+    SortGrammar();
     return PrintGrammar();
 }
 
@@ -565,7 +659,7 @@ vector<int> GrammarProcessor::FindLeftRecur(int TargetLeft, int CurrentLeft)
                 vector<int> rights = FindLeftRecur(TargetLeft, grammar.Right[0]);
                 if(rights.size() != 0)
                 {
-                    rights.insert(rights.end(), grammar.Right.begin()+1, grammar.Right.end());// 间接左递归
+                    rights.insert(rights.begin(), grammar.Right.begin()+1, grammar.Right.end());// 间接左递归
                     return rights;
                 }
             }
@@ -578,9 +672,7 @@ vector<vector<int>> GrammarProcessor::GetLL1Table()
     vector<vector<int>> LL1Table;
     Rule TempRule, EmptyRule;
 
-    OrganizeID2Word();
-    SortGrammar();
-    int Row = NonterminalLatestID + 1;
+    int Row = NonterminalLatestID + 2;
     int Col = TerminalLatestID - 100;
 
     vector<int> Cell;
@@ -632,21 +724,21 @@ vector<vector<int>> GrammarProcessor::GetLL1Table()
 
 string GrammarProcessor::PrintRule(const Rule& Rule)
 {
+    //string Ret;
+    //Ret = ID2Word[Rule.Left];
+    //Ret += " -> ";
+    //for(int RightID : Rule.Right)
+    //    Ret += ID2Word[RightID] + " ";
+    //Ret += '\n';
+    //return Ret;
+
     string Ret;
-    Ret = ID2Word[Rule.Left];
+    Ret = to_string(Rule.Left);
     Ret += " -> ";
     for(int RightID : Rule.Right)
-        Ret += ID2Word[RightID] + " ";
+        Ret += to_string(RightID) + " ";
     Ret += '\n';
     return Ret;
-
-//    string Ret;
-//    Ret = to_string(Rule.Left);
-//    Ret += " -> ";
-//    for(int RightID : Rule.Right)
-//        Ret += to_string(RightID) + " ";
-//    Ret += '\n';
-//    return Ret;
 }
 
 string GrammarProcessor::PrintGrammar()
@@ -666,7 +758,7 @@ int GrammarProcessor::Word2ID(string TargetWord)
         if(pair.second == TargetWord)
             return pair.first;
 
-    cout << "Warning: Can not find ID from '" << TargetWord << "'!\n";
+    //cout << "Word2ID: warning: Can not find ID from '" << TargetWord << "'!\n";
     return -1;
 }
 
@@ -676,9 +768,9 @@ void GrammarProcessor::AddNonterminal(string BaseSymbol)
     while(Word2ID(NewSymbol) != -1)
         NewSymbol += "'";
 
-    ID2Word[NonterminalLatestID] = NewSymbol;
     NonterminalLatestID++;
-    cout << "Add new non-terminal '" << NewSymbol << "' success!\n";
+    ID2Word[NonterminalLatestID] = NewSymbol;
+    //cout << "AddNonterminal: log: Add new non-terminal '" << NewSymbol << "' success!\n";
 }
 
 bool GrammarProcessor::IsNonterminal(int num)
