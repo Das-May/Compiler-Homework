@@ -115,10 +115,12 @@ TreeNode* GrammarAnalyst::BuildGrammarTree(int ID)
 
     if(ID >= 100)
     {
+        cout << Token.Word << endl;
+        cout.flush();
+
         node = new TreeNode(Token.Word);
         //node = new TreeNode(to_string(Token.ID));
         Match(ID);
-        cout << Token.Word << endl;
     }
     else if(Token.ID != -1)
     {
@@ -139,8 +141,6 @@ TreeNode* GrammarAnalyst::BuildGrammarTree(int ID)
             for(int i = 2; i < grammar.size(); i++)
                 node->Child.push_back(BuildGrammarTree(grammar[i]));
         }
-//        else
-//            Output += "Error: Lookup LL1 table failed! position is row=" + to_string(row) + " and col=" + to_string(col) + "\n";
     }
 
     return node;

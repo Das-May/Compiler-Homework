@@ -5,7 +5,7 @@ OPERATOR
 +|-|\*|/|<|=|;|:=
 
 COMMENT
-{.*}
+{(.|\n)*}
 
 IDENTIFER
 (letter)(letter)*

@@ -477,9 +477,11 @@ string GrammarProcessor::RemoveLeftCommonFactor()
                 // 若存在左公因子
                 ExistLCF = true;
 
-                if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])   // 直接左公因子
+                // 直接左公因子
+                if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])  
                     continue;
  
+                // 间接左公因子
                 auto subs1 = Substitute(*SameLeftRules[i], 0);
                 if (subs1.size() > 0)
                 {
@@ -509,38 +511,52 @@ string GrammarProcessor::RemoveLeftCommonFactor()
         if(!ExistLCF)
             continue;
 
-        // 消除直接左公因子
+        // 建立并查集
         int Union[200];
-        memset(Union, -1, sizeof(Union));//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引
-        vector<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
-        for(int k = 1; k < SameLeftRules.size(), it2 != SameLeftRules.end(); k++, it2++)
+        memset(Union, -1, sizeof(Union));//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引    
+        map<int, int> RightFirst2Index;
+        for (int i = 0;i < SameLeftRules.size(); i++) 
         {
-            if(Union[k] == -2)
+            int First = SameLeftRules[i]->Right[0];// 取左因子
+            if (RightFirst2Index.find(First) == RightFirst2Index.end()) // 若字典未记录
+                RightFirst2Index[First] = i;
+            else // 若字典已有某个集合
             {
-                Union[k] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
-                AddNonterminal(ID2Word[(*it2)->Left]);// 分配新非终结符字符C
+                Union[i] = RightFirst2Index[First]; // 则Union[m1]=n
+                Union[RightFirst2Index[First]] = -2;
+            }
+        }
 
-                int a = (*it2)->Right[0];
-                (*it2)->Right.erase((*it2)->Right.begin());
+        // 消除直接左公因子
+        vector<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
+        for(int i = 0; i < SameLeftRules.size(), it2 != SameLeftRules.end(); i++, it2++)
+        {
+            if(Union[i] == -2)
+            {
+                AddNonterminal(ID2Word[(*it2)->Left]);// 分配新非终结符字符C
+                Union[i] = NonterminalLatestID;// 让根结点存储对应的新非终结符序号
+
+                int a = (*it2)->Right[0];//a
+                (*it2)->Right.erase((*it2)->Right.begin());//B
 
                 // 新增文法C->B
-                Rule rule(Union[k], (*it2)->Right);
+                Rule rule(Union[i], (*it2)->Right);
                 if(rule.Right.size() == 0)
                     rule.Right.push_back(Word2ID("epslion")); // epslion（ε）
                 Grammar.push_back(rule);
                 // 把文法文法A->aB改为文法A->aC
                 (*it2)->Right.clear();
                 (*it2)->Right.push_back(a);
-                (*it2)->Right.push_back(Union[k]);
+                (*it2)->Right.push_back(Union[i]);
 
             }
-            else if(Union[k] != -1)
+            else if(Union[i] != -1)
             {
                 // 将文法A->aB修改为文法C->B
                 (*it2)->Right.erase((*it2)->Right.begin());//移除a
                 if((*it2)->Right.size() == 0)
                     (*it2)->Right.push_back(Word2ID("epslion"));//epslion
-                (*it2)->Left = Union[Union[k]];// 把A改成C
+                (*it2)->Left = Union[Union[i]];// 把A改成C
             }
         }
 
@@ -560,32 +576,6 @@ vector<list<Rule>::iterator> GrammarProcessor::FindSameLeftRules(int Left)
         if((*it).Left == Left)
             SameLeftRules.push_back(it);
     return SameLeftRules;
-}
-
-list<int> GrammarProcessor::FindPossibleLCF(int ID, list<int> FirstInters)
-{
-    if(ID >= 100)
-        return {ID};
-
-    list<int> Ret = {};
-    for(const Rule& grammar : Grammar)
-    {
-        if(grammar.Left != ID || grammar.Left == grammar.Right[0])
-            continue;
-
-        GetFirst(grammar.Right[0]);
-        if(!includes(first.begin(), first.end(), FirstInters.begin(), FirstInters.end()))
-            continue;
-
-        Ret.push_back(grammar.Right[0]);
-
-        if(first == FirstInters)
-            return Ret;
-
-        list<int> temp = FindPossibleLCF(grammar.Right[0], FirstInters);
-        Ret.insert(Ret.end(), temp.begin(), temp.end());
-    }
-    return Ret;
 }
 
 string GrammarProcessor::RemoveLeftRecursion()
@@ -724,21 +714,21 @@ vector<vector<int>> GrammarProcessor::GetLL1Table()
 
 string GrammarProcessor::PrintRule(const Rule& Rule)
 {
-    //string Ret;
-    //Ret = ID2Word[Rule.Left];
-    //Ret += " -> ";
-    //for(int RightID : Rule.Right)
-    //    Ret += ID2Word[RightID] + " ";
-    //Ret += '\n';
-    //return Ret;
-
     string Ret;
-    Ret = to_string(Rule.Left);
+    Ret = ID2Word[Rule.Left];
     Ret += " -> ";
     for(int RightID : Rule.Right)
-        Ret += to_string(RightID) + " ";
+        Ret += ID2Word[RightID] + " ";
     Ret += '\n';
     return Ret;
+
+//    string Ret;
+//    Ret = to_string(Rule.Left);
+//    Ret += " -> ";
+//    for(int RightID : Rule.Right)
+//        Ret += to_string(RightID) + " ";
+//    Ret += '\n';
+//    return Ret;
 }
 
 string GrammarProcessor::PrintGrammar()

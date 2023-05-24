@@ -2,5 +2,5 @@
 
 bool GrammarUtil::IsSpace(char c)
 {
-    return (c == ' ' || c=='\n' || c=='\r' || c=='\t');
+    return (c==' ' || c=='\n' || c=='\r' || c=='\t');
 }

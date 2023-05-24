@@ -25,16 +25,16 @@ MainWindow::MainWindow(QWidget *parent)
     GrammarProcessorInstance = new GrammarProcessor(c);
     qDebug() << "=== Simplify ===\n";
     ui->TE_Simplified->setText(QString::fromStdString(GrammarProcessorInstance->SimplifyGrammar()));
-    qDebug() << "=== Remove Left Common Factor ===\n";
-    ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
     qDebug() << "=== Remove Left Recursion ===\n";
     ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
+    qDebug() << "=== Remove Left Common Factor ===\n";
+    ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
     qDebug() << "=== GetFirst ===\n";
     ui->TE_FirstSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFirst()));
     qDebug() << "=== GetFollow ===\n";
     ui->TE_FollowSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFollow()));
-//    qDebug() << "=== LL1 ===\n";
-//    SetLL1Table();
+    qDebug() << "=== LL1 ===\n";
+    SetLL1Table();
     }
 
     connect(ui->Btn_ImportBNF,&QPushButton::clicked,[=](){
@@ -50,10 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
                 GrammarProcessorInstance = new GrammarProcessor(c);
                 qDebug() << "=== Simplify ===\n";
                 ui->TE_Simplified->setText(QString::fromStdString(GrammarProcessorInstance->SimplifyGrammar()));
-                qDebug() << "=== Remove Left Common Factor ===\n";
-                ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
                 qDebug() << "=== Remove Left Recursion ===\n";
                 ui->TE_RemoveLeftRecursion->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftRecursion()));
+                qDebug() << "=== Remove Left Common Factor ===\n";
+                ui->TE_RemoveLeftCommonFactor->setText(QString::fromStdString(GrammarProcessorInstance->RemoveLeftCommonFactor()));
                 qDebug() << "=== GetFirst ===\n";
                 ui->TE_FirstSet->setText(QString::fromStdString(GrammarProcessorInstance->GetFirst()));
                 qDebug() << "=== GetFollow ===\n";
@@ -64,16 +64,16 @@ MainWindow::MainWindow(QWidget *parent)
         }
     );
 
-//    {
-//    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\SAMPLE1.TNY";
-//    QByteArray fn_qba = FileName.toUtf8();
-//    char* fn_cc = fn_qba.data();
-//    char* c = Loader::ReadText(fn_cc);
-//    ui->TE_Code->setText(QString(c));
-//    ui->Lable_Tip->setText(QString::fromStdString(GrammarAnalystInstance.Execute(c)));
-//    ui->TreeWidget_GrammarTree->addTopLevelItem(GetGrammarTree(GrammarAnalystInstance.GetRoot()));
-//    ui->TreeWidget_GrammarTree->expandAll();
-//    }
+    {
+    QString FileName = "D:\\Homework\\Compiler-Homework\\toGithub\\ComprehensiveExp2\\TestData\\SAMPLE2.cpp";
+    QByteArray fn_qba = FileName.toUtf8();
+    char* fn_cc = fn_qba.data();
+    char* c = Loader::ReadText(fn_cc);
+    ui->TE_Code->setText(QString(c));
+    ui->Lable_Tip->setText(QString::fromStdString(GrammarAnalystInstance.Execute(c)));
+    ui->TreeWidget_GrammarTree->addTopLevelItem(GetGrammarTree(GrammarAnalystInstance.GetRoot()));
+    ui->TreeWidget_GrammarTree->expandAll();
+    }
     connect(ui->Btn_ImportCode,&QPushButton::clicked,[=](){
 
         }

@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <string>
+#include <string.h>
 
 using namespace std;
 
@@ -102,7 +102,6 @@ private:
     vector<Rule> Substitute(const Rule& rule, int pos);
 
     vector<list<Rule>::iterator> FindSameLeftRules(int Left);
-    list<int> FindPossibleLCF(int ID, list<int> First);
 
     /**
      * @brief Find left Recursion(LR) by using DFS, the LR may be direct or indirect

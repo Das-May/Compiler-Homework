@@ -1,7 +1,6 @@
-A -> A a
-A -> B b c
+A -> B a
+A -> a b c
 A -> c
-B -> A e f
+B -> a e f
 B -> g A h
 B -> a
-C -> c
