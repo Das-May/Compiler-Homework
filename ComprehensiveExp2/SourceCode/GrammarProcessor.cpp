@@ -97,9 +97,9 @@ void GrammarProcessor::OrganizeID2Word()
         {
             IsNonTerminal[grammar.Left] = true;
 
-            NonterminalLatestID++;
             TempID2Word[NonterminalLatestID] = ID2Word[grammar.Left];
             UpdateID[grammar.Left] = NonterminalLatestID;
+            NonterminalLatestID++;
         }
     }
 
@@ -219,7 +219,6 @@ bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
     return Endable;
 }
 
-// 删除不可终止规则
 void GrammarProcessor::RemoveUnterminableRules()
 {
     memset(TempSet, -1, sizeof(TempSet)); // 意为Unterminable，是否可终止
@@ -250,9 +249,13 @@ void GrammarProcessor::RemoveUnterminableRules()
 string GrammarProcessor::SimplifyGrammar()
 {
     RemoveHarmfulRules();
+    cout << "===Remove Harmful Rules===\n" << PrintGrammar() << '\n';
     RemoveUnreachableRules();
+    cout << "===Remove Unreachable Rules===\n" << PrintGrammar() << '\n';
     RemoveUnterminableRules();
+    cout << "===Remove Unterminable Rules===\n" << PrintGrammar() << '\n';
     OrganizeID2Word();
+    cout << "===Simplify Grammar Finally===\n" << PrintGrammar() << '\n';
     return PrintGrammar();
 }
 
@@ -416,6 +419,34 @@ string GrammarProcessor::GetFollow()
 }
 #pragma endregion }
 
+vector<Rule> GrammarProcessor::Substitute(const Rule& rule, int pos)
+{
+    int targetID = rule.Right[pos];
+    if (!IsNonterminal(targetID))
+    {
+        cout << "LeftSubstitute: Error: can not substitute to " << PrintRule(rule) << ", pos = " << to_string(pos) << '\n';
+        return {};
+    }
+
+    vector<Rule> Ret;
+    for (const Rule& grammar : Grammar)
+    {
+        if (grammar.Left != targetID)
+            continue;
+
+        Rule temp(rule.Left, {});
+        for (int right : rule.Right)
+        {
+            if (right == targetID)
+                temp.Right.insert(temp.Right.end(), grammar.Right.begin(), grammar.Right.end());
+            else
+                temp.Right.push_back(right);
+        }
+        Ret.push_back(temp);
+    }
+    return Ret;
+}
+
 string GrammarProcessor::RemoveLeftCommonFactor()
 {
     for(int nonterm = 0; nonterm <= NonterminalLatestID; nonterm++)// 遍历每个非终结符号，设当前符号为Vni
@@ -425,102 +456,48 @@ string GrammarProcessor::RemoveLeftCommonFactor()
         if(SameLeftRules.size() <= 1)
             continue;
 
-        // 遍历以Vni为左部的文法，找寻左公因子
-        int ExistLCF = false;
-        int Union[200];
-        memset(Union, -1, sizeof (Union) );//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引
+        // 求first集
         vector<list<int>> FirstContainer;
-        for(int Index = 0; Index < SameLeftRules.size(); Index++ )
-        {
-            GetFirst(SameLeftRules[Index]->Right[0]);// first是一个成员变量
-            FirstContainer.push_back(first);
+        for (auto rule : SameLeftRules)
+            FirstContainer.push_back(GetFirst((*rule).Right[0]));
 
-            list<int> inters;
-            for(int parent = 0; parent < FirstContainer.size() - 1; parent++)
+        // 遍历以Vni为左部的文法，找寻并消除间接左公因子
+        int ExistLCF = false;
+        for(int i = 0; i < SameLeftRules.size(); i++)
+            for (int j = i + 1; j < SameLeftRules.size(); j++)
             {
-                set_intersection(FirstContainer[parent].begin(), FirstContainer[parent].end(), first.begin(), first.end(), inserter(inters, inters.begin()));
-                if(inters.size()!=0)//存在左公因子
-                {
-                    ExistLCF = true;
-                    Union[Index] = parent; // 并查集记录
-                    Union[Union[Index]] = -2;
-                    break;
-                }
-            }
-            if(!ExistLCF)
-                continue;
-
-            // 左因子相同，暂不需要处理
-            auto& one = SameLeftRules[Union[Index]]->Right;
-            auto& other = SameLeftRules[Index]->Right;
-            if(one[0] == other[0])
-                continue;
-
-            // 提取间接左公因子CommonID，它可能是非终结符，也可能是终结符
-            // 例1，A->B,A->C,B->ab,C->ac,此处CommonID = a
-            // 例2，A->B,A->C,B->Zb,C->DE,D->Zd,Z->...,此处CommonID = Z
-            int CommonID = -1;
-            for(int id1 : FindPossibleLCF(one[0], inters))
-            {
-                for(int id2 : FindPossibleLCF(other[0], inters))
-                    if(id1 == id2){
-                        CommonID = id1;
-                        break;
-                    }
-                if(CommonID != -1)
-                    break;
-            }
-            for(int i = 0; i < 2; i++)
-            {
-                auto& temp = i ? one : other;
-
-                if(temp[0] == CommonID)
+                // first交集为空，非左公因子
+                const auto& f1 = FirstContainer[i];
+                const auto& f2 = FirstContainer[j];
+                list<int> inters;
+                set_intersection(f1.begin(), f1.end(), f2.begin(), f2.end(), inserter(inters, inters.begin()));
+                if (inters.size() == 0)
                     continue;
 
-                // 改写A -> B为A -> CommonID B'
-                int LeftFactor = temp[0];           // B
-                AddNonterminal(ID2Word[LeftFactor]);// B'
-                temp[0] = NonterminalLatestID;
-                temp.insert(temp.begin(), CommonID);// A -> CommonID B'
+                // 若存在左公因子
+                ExistLCF = true;
 
-                // 并沿途新增文法B’->b（例1），或者C'->D'E,D'->d（例2）
-                while(LeftFactor != -1)
-                    for(Rule& grammar : Grammar)
-                    {
-                        if(grammar.Left != LeftFactor)
-                            continue;
-
-                        GetFirst(grammar.Right[0]);
-                        if(first != FirstContainer[Index])
-                            continue;
-
-                        if(grammar.Right[0] == CommonID)//B->ab
-                        {
-                            Rule rule(NonterminalLatestID, grammar.Right);
-                            rule.Right.erase(rule.Right.begin());
-                            if(rule.Right.size()==0)
-                                rule.Right.push_back(100);
-                            Grammar.push_back(rule);
-
-                            LeftFactor = -1;
-                        }
-                        else//C->DE
-                        {
-                            Rule rule(NonterminalLatestID, grammar.Right);
-                            AddNonterminal(ID2Word[grammar.Right[0]]);//D'
-                            rule.Right[0] = NonterminalLatestID;
-                            Grammar.push_back(rule);
-
-                            LeftFactor = grammar.Right[0];
-                        }
-                        break;
-                    }
+                if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])   // 直接左公因子
+                    continue;
+ 
+                int target = f1.size() > f2.size() ? i : j;                     // 间接左公因子
+                auto substitution = Substitute(*SameLeftRules[i], 0);
+                *SameLeftRules[target] = substitution[0];//危
+                FirstContainer[target] = GetFirst(substitution[0].Right[0]);
+                for (int k = 1; k < substitution.size(); k++)
+                {
+                    Grammar.push_back(substitution[k]);
+                    SameLeftRules.push_back(Grammar.end());
+                    FirstContainer.push_back(GetFirst(substitution[k].Right[0]));
+                }
+                j--;
             }
-        }
         if(!ExistLCF)
             continue;
 
         // 消除直接左公因子
+        int Union[200];
+        memset(Union, -1, sizeof(Union));//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引
         vector<list<Rule>::iterator>::iterator it2 = SameLeftRules.begin();
         for(int k = 1; k < SameLeftRules.size(), it2 != SameLeftRules.end(); k++, it2++)
         {
@@ -560,6 +537,15 @@ string GrammarProcessor::RemoveLeftCommonFactor()
 //    SortGrammar();
 
     return PrintGrammar();
+}
+
+vector<list<Rule>::iterator> GrammarProcessor::FindSameLeftRules(int Left)
+{
+    vector<list<Rule>::iterator> SameLeftRules;
+    for(list<Rule>::iterator it = Grammar.begin(); it!=Grammar.end(); it++)
+        if((*it).Left == Left)
+            SameLeftRules.push_back(it);
+    return SameLeftRules;
 }
 
 list<int> GrammarProcessor::FindPossibleLCF(int ID, list<int> FirstInters)

@@ -99,6 +99,8 @@ private:
     bool RemoveUnterminableRules_sub(int NonterminalID, int depth);
     void RemoveUnterminableRules();
 
+    vector<Rule> Substitute(const Rule& rule, int pos);
+
     vector<list<Rule>::iterator> FindSameLeftRules(int Left);
     list<int> FindPossibleLCF(int ID, list<int> First);
 
@@ -113,7 +115,6 @@ private:
     void GetFirst_sub(int x);
     list<int>& GetFirst(int x);
 
-    void GetFollow_sub(int x);
     list<int> GetFollow(int x);
 
 public:
