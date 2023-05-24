@@ -480,17 +480,31 @@ string GrammarProcessor::RemoveLeftCommonFactor()
                 if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])   // 直接左公因子
                     continue;
  
-                int target = f1.size() > f2.size() ? i : j;                     // 间接左公因子
-                auto substitution = Substitute(*SameLeftRules[i], 0);
-                *SameLeftRules[target] = substitution[0];//危
-                FirstContainer[target] = GetFirst(substitution[0].Right[0]);
-                for (int k = 1; k < substitution.size(); k++)
+                auto subs1 = Substitute(*SameLeftRules[i], 0);
+                if (subs1.size() > 0)
                 {
-                    Grammar.push_back(substitution[k]);
-                    SameLeftRules.push_back(Grammar.end());
-                    FirstContainer.push_back(GetFirst(substitution[k].Right[0]));
+                    *SameLeftRules[i] = subs1[0];//危
+                    FirstContainer[i] = GetFirst(subs1[0].Right[0]);
+                    for (int k = 1; k < subs1.size(); k++)
+                    {
+                        Grammar.push_back(subs1[k]);
+                        SameLeftRules.push_back(prev(Grammar.end()));
+                        FirstContainer.push_back(GetFirst(subs1[k].Right[0]));
+                    }
                 }
-                j--;
+                
+                auto subs2 = Substitute(*SameLeftRules[j], 0);
+                if (subs2.size() > 0)
+                {
+                    *SameLeftRules[j] = subs2[0];//危
+                    FirstContainer[j] = GetFirst(subs2[0].Right[0]);
+                    for (int k = 1; k < subs2.size(); k++)
+                    {
+                        Grammar.push_back(subs2[k]);
+                        SameLeftRules.push_back(prev(Grammar.end()));
+                        FirstContainer.push_back(GetFirst(subs2[k].Right[0]));
+                    }
+                }
             }
         if(!ExistLCF)
             continue;
@@ -534,7 +548,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
         cout.flush();
     }
 
-//    SortGrammar();
+    SortGrammar();
 
     return PrintGrammar();
 }
