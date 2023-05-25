@@ -195,24 +195,23 @@ void MainWindow::ProcessRegex(char* c)
 
 string MainWindow::GenerateCode()
 {
-    string code = "";
-
-    code += Loader::ReadText("template.txt");
+    string code = Loader::ReadText("template.txt");
 
     code += "TypeCount = " + to_string(TypeCount) + ";\n";
+
     for(string name : TypeName)
         code += "TypeName.push_back(\"" + name + "\");\n";
-    code += "vector<int> cell;\n\
-            vector<vector<int>> table;\n";
+
+    code += "vector<vector<int>> table;\n";
     for(const vector<vector<int>>& table : MinDFA)
     {
         code += "table.clear();\n";
         for(const vector<int>& cell : table)
         {
-            code += "cell.clear();";
+            string temp;
             for(const int id : cell)
-                code += "cell.push_back(" + to_string(id) + ");";
-            code += "table.push_back(cell);\n";
+                temp += to_string(id) + ", ";
+            code += "table.push_back({" + temp + "});\n";
         }
         code += "MinDFA.push_back(table);\n";
     }

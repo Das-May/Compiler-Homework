@@ -1,15 +1,15 @@
-KEYWORD
+关键词
 (if)|(then)|(else)|(end)|(repeat)|(until)|(read)|(write)|(IF)|(THEN)|(ELSE)|(END)|(REPEAT)|(UNTIL)|(READ)|(WRITE)
 
-OPERATOR
+专用符号
 +|-|\*|/|<|=|;|:=
 
 COMMENT
-{(.|\n)*}
+{.*}
 
-IDENTIFER
+identifier
 (letter)(letter)*
 
-NUMBER
+number
 (digit)(digit)*
 

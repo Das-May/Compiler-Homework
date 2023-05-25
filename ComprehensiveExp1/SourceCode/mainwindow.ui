@@ -84,7 +84,7 @@
          </property>
          <widget class="QWidget" name="tab_1">
           <attribute name="title">
-           <string>Tab 1</string>
+           <string>词型1</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
@@ -181,7 +181,7 @@
          </widget>
          <widget class="QWidget" name="tab_2">
           <attribute name="title">
-           <string>Tab 2</string>
+           <string>词型2</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
@@ -284,7 +284,7 @@
          </widget>
          <widget class="QWidget" name="tab">
           <attribute name="title">
-           <string/>
+           <string>词型3</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
@@ -384,7 +384,7 @@
          </widget>
          <widget class="QWidget" name="tab_3">
           <attribute name="title">
-           <string/>
+           <string>词型4</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
@@ -481,7 +481,7 @@
          </widget>
          <widget class="QWidget" name="tab_4">
           <attribute name="title">
-           <string/>
+           <string>词型5</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
@@ -578,7 +578,7 @@
          </widget>
          <widget class="QWidget" name="tab_5">
           <attribute name="title">
-           <string/>
+           <string>词型6</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_8">
            <item>

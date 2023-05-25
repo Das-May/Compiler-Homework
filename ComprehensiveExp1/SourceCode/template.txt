@@ -47,11 +47,16 @@ int main()
 
 	while (*code)
 	{
+		bool succes = false;
 		for (int i = 0; i < TypeCount; i++)
 			if (TransferStatus(code, MinDFA[i]))
-				Output += "  " + TypeName[i] + '\n';
-
-		code++;
+			{
+				Output += ",  " + TypeName[i] + ")\n";
+				succes = true;
+				break;
+			}
+		if(!succes)
+			code++;
 	}
 	cout << "单词编码如下:\n" << Output;
 	cout << "保存为result.lex\n";

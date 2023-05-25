@@ -107,7 +107,7 @@ void Regex2NFA::GenerateNFA(string Regex)
                 totalCondition.push_back((char)1);//记录
         }
         else // 一般字符
-		{
+        {
             s.push(GenerateNFAChunk(c));
             if (count(totalCondition.begin(), totalCondition.end(), c) == 0)
                 totalCondition.push_back(c);
