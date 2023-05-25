@@ -87,6 +87,8 @@ void GrammarProcessor::OrganizeID2Word()
     TerminalLatestID = 102;
 
     map<int, int> UpdateID;
+    UpdateID[100] = 100;
+    UpdateID[101] = 101;
 
     // 处理非终结符
     bool IsNonTerminal[200];
@@ -132,13 +134,12 @@ void GrammarProcessor::RemoveHarmfulRules()
 {
     list<Rule>::iterator it = Grammar.begin();
     int size = Grammar.size();
-    for(int i = 0; i < size; i++, it++)
+    for(int i = 0; i < size; i++)
     {
-        if((*it).Right.size() == 1 && (*it).Left == (*it).Right[0]) // U->U
-        {
+        if ((*it).Right.size() == 1 && (*it).Left == (*it).Right[0]) // U->U
             it = Grammar.erase(it);     // 删除有害的文法规则
-            it--;
-        }
+        else
+            it++;
     }
 }
 
@@ -150,7 +151,7 @@ void GrammarProcessor::RemoveUnreachableRules()
 
     bool flag = true;
     while(flag)
-    { 
+    {
         flag = false;
         for (Rule grammar : Grammar)
         {
@@ -165,7 +166,7 @@ void GrammarProcessor::RemoveUnreachableRules()
                     flag = true;
                 }
             }
-        }           
+        }
     }
 
     list<Rule>::iterator it = Grammar.begin();
@@ -175,7 +176,7 @@ void GrammarProcessor::RemoveUnreachableRules()
             it = Grammar.erase(it); // 删除不可达的文法规则
         else
             it++;
-    }    
+    }
 }
 
 bool GrammarProcessor::RemoveUnterminableRules_sub(int NonterminalID, int depth)
@@ -249,12 +250,13 @@ void GrammarProcessor::RemoveUnterminableRules()
 string GrammarProcessor::SimplifyGrammar()
 {
     RemoveHarmfulRules();
-    cout << "===Remove Harmful Rules===\n" << PrintGrammar() << '\n';
+    //cout << "===Remove Harmful Rules===\n" << PrintGrammar() << '\n';
     RemoveUnreachableRules();
-    cout << "===Remove Unreachable Rules===\n" << PrintGrammar() << '\n';
+    //cout << "===Remove Unreachable Rules===\n" << PrintGrammar() << '\n';
     RemoveUnterminableRules();
-    cout << "===Remove Unterminable Rules===\n" << PrintGrammar() << '\n';
+    //cout << "===Remove Unterminable Rules===\n" << PrintGrammar() << '\n';
     OrganizeID2Word();
+    SortGrammar();
     cout << "===Simplify Grammar Finally===\n" << PrintGrammar() << '\n';
     return PrintGrammar();
 }
@@ -462,60 +464,67 @@ string GrammarProcessor::RemoveLeftCommonFactor()
             FirstContainer.push_back(GetFirst((*rule).Right[0]));
 
         // 遍历以Vni为左部的文法，找寻并消除间接左公因子
-        int ExistLCF = false;
-        for(int i = 0; i < SameLeftRules.size(); i++)
-            for (int j = i + 1; j < SameLeftRules.size(); j++)
-            {
-                // first交集为空，非左公因子
-                const auto& f1 = FirstContainer[i];
-                const auto& f2 = FirstContainer[j];
-                list<int> inters;
-                set_intersection(f1.begin(), f1.end(), f2.begin(), f2.end(), inserter(inters, inters.begin()));
-                if (inters.size() == 0)
-                    continue;
-
-                // 若存在左公因子
-                ExistLCF = true;
-
-                // 直接左公因子
-                if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])  
-                    continue;
- 
-                // 间接左公因子
-                auto subs1 = Substitute(*SameLeftRules[i], 0);
-                if (subs1.size() > 0)
+        bool ExistLCF = false;
+        bool ExistIndrectLCF = true;
+        while (ExistIndrectLCF)
+        {
+            ExistIndrectLCF = false;
+            for (int i = 0; i < SameLeftRules.size(); i++)
+                for (int j = i + 1; j < SameLeftRules.size(); j++)
                 {
-                    *SameLeftRules[i] = subs1[0];//危
-                    FirstContainer[i] = GetFirst(subs1[0].Right[0]);
-                    for (int k = 1; k < subs1.size(); k++)
+                    // first交集为空，非左公因子
+                    const auto& f1 = FirstContainer[i];
+                    const auto& f2 = FirstContainer[j];
+                    list<int> inters;
+                    set_intersection(f1.begin(), f1.end(), f2.begin(), f2.end(), inserter(inters, inters.begin()));
+                    if (inters.size() == 0)
+                        continue;
+
+                    // 若存在左公因子
+                    ExistLCF = true;
+
+                    // 直接左公因子
+                    if (SameLeftRules[i]->Right[0] == SameLeftRules[j]->Right[0])
+                        continue;
+
+                    // 间接左公因子
+                    ExistIndrectLCF = true;
+
+                    auto subs1 = Substitute(*SameLeftRules[i], 0);
+                    if (subs1.size() > 0)
                     {
-                        Grammar.push_back(subs1[k]);
-                        SameLeftRules.push_back(prev(Grammar.end()));
-                        FirstContainer.push_back(GetFirst(subs1[k].Right[0]));
+                        *SameLeftRules[i] = subs1[0];//危
+                        FirstContainer[i] = GetFirst(subs1[0].Right[0]);
+                        for (int k = 1; k < subs1.size(); k++)
+                        {
+                            Grammar.push_back(subs1[k]);
+                            SameLeftRules.push_back(prev(Grammar.end()));
+                            FirstContainer.push_back(GetFirst(subs1[k].Right[0]));
+                        }
+                    }
+
+                    auto subs2 = Substitute(*SameLeftRules[j], 0);
+                    if (subs2.size() > 0)
+                    {
+                        *SameLeftRules[j] = subs2[0];//危
+                        FirstContainer[j] = GetFirst(subs2[0].Right[0]);
+                        for (int k = 1; k < subs2.size(); k++)
+                        {
+                            Grammar.push_back(subs2[k]);
+                            SameLeftRules.push_back(prev(Grammar.end()));
+                            FirstContainer.push_back(GetFirst(subs2[k].Right[0]));
+                        }
                     }
                 }
-                
-                auto subs2 = Substitute(*SameLeftRules[j], 0);
-                if (subs2.size() > 0)
-                {
-                    *SameLeftRules[j] = subs2[0];//危
-                    FirstContainer[j] = GetFirst(subs2[0].Right[0]);
-                    for (int k = 1; k < subs2.size(); k++)
-                    {
-                        Grammar.push_back(subs2[k]);
-                        SameLeftRules.push_back(prev(Grammar.end()));
-                        FirstContainer.push_back(GetFirst(subs2[k].Right[0]));
-                    }
-                }
-            }
+        }
         if(!ExistLCF)
             continue;
 
         // 建立并查集
         int Union[200];
-        memset(Union, -1, sizeof(Union));//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引    
+        memset(Union, -1, sizeof(Union));//Union的值为-2代表这是父节点，-1代表不存在公因子，自然数代表该子节点的父节点的索引
         map<int, int> RightFirst2Index;
-        for (int i = 0;i < SameLeftRules.size(); i++) 
+        for (int i = 0;i < SameLeftRules.size(); i++)
         {
             int First = SameLeftRules[i]->Right[0];// 取左因子
             if (RightFirst2Index.find(First) == RightFirst2Index.end()) // 若字典未记录
@@ -564,7 +573,7 @@ string GrammarProcessor::RemoveLeftCommonFactor()
         cout.flush();
     }
 
-    SortGrammar();
+    SimplifyGrammar();
 
     return PrintGrammar();
 }
@@ -581,7 +590,7 @@ vector<list<Rule>::iterator> GrammarProcessor::FindSameLeftRules(int Left)
 string GrammarProcessor::RemoveLeftRecursion()
 {
     // 遍历每个非终结符号，设当前符号为Vni
-    for(int i = 0; i <= NonterminalLatestID; i++) 
+    for(int i = 0; i <= NonterminalLatestID; i++)
     {
         bool existLR = false;
         for(Rule& grammar : Grammar)
@@ -628,12 +637,17 @@ string GrammarProcessor::RemoveLeftRecursion()
 
         for(Rule& grammar : Grammar) // 遍历所有以Vni为左部的文法
             if(grammar.Left == i)
+            {
+                if(grammar.Right[0] == Word2ID("epslion"))
+                    grammar.Right.erase(grammar.Right.begin());
                 grammar.Right.push_back(NonterminalLatestID); // 将A'追加到最右部
+            }
         cout << "RemoveLeftRecursion: log: Finish remove left recursion, id=" << to_string(i) << ", word=" << ID2Word[i] << "\n";
         cout.flush();
     }
 
-    SortGrammar();
+    SimplifyGrammar();
+
     return PrintGrammar();
 }
 

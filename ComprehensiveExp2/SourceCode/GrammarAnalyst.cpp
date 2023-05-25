@@ -78,10 +78,15 @@ void GrammarAnalyst::GetToken()
         while(Buffer[Pos] >= 'A' && Buffer[Pos] <= 'z')
             tempWord += Buffer[Pos++];
         Token.ID = IdentiferID;
+        Token.Word = tempWord;
+
         for(auto terminal : ID2Word)
             if(terminal.first > 100 && terminal.second == tempWord)
+            {
                 Token.ID = terminal.first;
-        Token.Word = tempWord;
+                break;
+            }
+
         return;
     }
 
@@ -118,7 +123,7 @@ TreeNode* GrammarAnalyst::BuildGrammarTree(int ID)
         cout << Token.Word << endl;
         cout.flush();
 
-        node = new TreeNode(Token.Word);
+        node = new TreeNode(Token.Word + '(' + ID2Word[ID] + ')');
         //node = new TreeNode(to_string(Token.ID));
         Match(ID);
     }
