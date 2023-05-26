@@ -160,6 +160,7 @@ bool TransferStatus(char*& code, const vector<vector<int>>& MinDFA)
 		// 状态无法转移
 		if (CheckEnd(CurrentStatusID, MinDFA[0]))// 到达终态节点,则输出
 		{
+			Output += '(';
 			while (SourcePos != code)
 			{
 				Output += *SourcePos;
